@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kickplate/api/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -13,7 +14,7 @@ type Database struct {
 }
 
 func NewDatabase(env Env, logger Logger) Database {
-	logger.Info("Initializing database connection (placeholder)")
+	logger.Info("Initializing database connection")
 	username := env.DBUsername
 	password := env.DBPassword
 	host := env.DBHost
@@ -54,6 +55,23 @@ func NewDatabase(env Env, logger Logger) Database {
 	sqlDB.SetConnMaxIdleTime(10 * time.Minute)
 
 	logger.Info("Database connection established")
+
+	if err := db.AutoMigrate(
+		&model.User{},
+		&model.Account{},
+		&model.EmailVerification{},
+		&model.Plate{},
+		&model.PlateTag{},
+		&model.PlateMember{},
+		&model.PlateReview{},
+		&model.Badge{},
+		&model.PlateBadge{},
+		&model.SyncLog{},
+	); err != nil {
+		logger.Panicf("AutoMigrate failed: %v", err)
+	}
+
+	logger.Info("Database migrations applied")
 
 	return Database{
 		DB: db,

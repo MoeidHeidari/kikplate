@@ -40,7 +40,15 @@ var (
 
 func GetLogger() Logger {
 	loggerOnce.Do(func() {
-		logger := newLogger(NewEnv())
+		logLevel := os.Getenv("SERVER_LOG_LEVEL")
+		if logLevel == "" {
+			logLevel = "debug"
+		}
+		env := Env{
+			Environment: os.Getenv("ENV"),
+			LogLevel:    logLevel,
+		}
+		logger := newLogger(env)
 		globalLogger = &logger
 	})
 	return *globalLogger

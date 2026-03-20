@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/kickplate/api/lib"
 	"github.com/kickplate/api/model"
 	"github.com/kickplate/api/repository"
 	"gorm.io/gorm"
@@ -14,8 +15,8 @@ type emailVerificationRepository struct {
 	db *gorm.DB
 }
 
-func NewEmailVerificationRepository(db *gorm.DB) repository.EmailVerificationRepository {
-	return &emailVerificationRepository{db: db}
+func NewEmailVerificationRepository(db lib.Database) repository.EmailVerificationRepository {
+	return &emailVerificationRepository{db: db.DB}
 }
 
 func (r *emailVerificationRepository) Create(ctx context.Context, ev *model.EmailVerification) error {

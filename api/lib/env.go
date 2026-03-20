@@ -5,21 +5,44 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
+type OAuthProvider struct {
+	Name         string   `mapstructure:"name"`
+	ClientID     string   `mapstructure:"client_id"`
+	ClientSecret string   `mapstructure:"client_secret"`
+	RedirectURL  string   `mapstructure:"redirect_url"`
+	Scopes       []string `mapstructure:"scopes"`
+}
+
 type Env struct {
-	ServerPort  string `mapstructure:"SERVER_PORT"`
-	LogLevel    string `mapstructure:"SERVER_LOG_LEVEL"`
-	Environment string `mapstructure:"ENV"`
-	DBUsername  string `mapstructure:"DB_USER"`
-	DBPassword  string `mapstructure:"DB_PASS"`
-	DBHost      string `mapstructure:"DB_HOST"`
-	DBPort      string `mapstructure:"DB_PORT"`
-	DBName      string `mapstructure:"DB_NAME"`
+	ServerPort     string `mapstructure:"SERVER_PORT"`
+	LogLevel       string `mapstructure:"SERVER_LOG_LEVEL"`
+	Environment    string `mapstructure:"ENV"`
+	DBUsername     string `mapstructure:"DB_USER"`
+	DBPassword     string `mapstructure:"DB_PASS"`
+	DBHost         string `mapstructure:"DB_HOST"`
+	DBPort         string `mapstructure:"DB_PORT"`
+	DBName         string `mapstructure:"DB_NAME"`
+	JWTSecret      string `mapstructure:"JWT_SECRET"`
+	AuthHeader     string `mapstructure:"AUTH_HEADER"`
+	OAuthProviders []OAuthProvider
+}
+
+func (e Env) GetOAuthProvider(name string) (OAuthProvider, bool) {
+	for _, p := range e.OAuthProviders {
+		if p.Name == name {
+			return p, true
+		}
+	}
+	return OAuthProvider{}, false
 }
 
 func NewEnv() Env {
+	godotenv.Load()
+
 	env := Env{}
 
 	viper.SetEnvPrefix("")
@@ -49,22 +72,58 @@ func NewEnv() Env {
 		}
 	}
 
-	err := viper.Unmarshal(&env)
-	if err != nil {
-		fmt.Printf("Error parsing config: %v\n", err)
-		os.Exit(1)
-	}
+	env.Environment = firstNonEmpty(
+		getConfigValue("server.environment", "", ""),
+		os.Getenv("ENV"),
+		os.Getenv("NODE_ENV"),
+		"development",
+	)
+	env.LogLevel = firstNonEmpty(
+		getConfigValue("server.log.level", "", ""),
+		os.Getenv("SERVER_LOG_LEVEL"),
+		os.Getenv("LOG_LEVEL"),
+		"info",
+	)
+	env.ServerPort = firstNonEmpty(
+		getConfigValue("server.port", "", ""),
+		os.Getenv("SERVER_PORT"),
+		"8080",
+	)
+	env.DBHost = firstNonEmpty(
+		getConfigValue("database.host", "", ""),
+		os.Getenv("DB_HOST"),
+		"localhost",
+	)
+	env.DBPort = firstNonEmpty(
+		getConfigValue("database.port", "", ""),
+		os.Getenv("DB_PORT"),
+		"5432",
+	)
+	env.DBName = firstNonEmpty(
+		getConfigValue("database.database", "", ""),
+		os.Getenv("DB_NAME"),
+	)
+	env.DBUsername = firstNonEmpty(
+		getConfigValue("database.username", "", ""),
+		os.Getenv("DB_USER"),
+	)
+	env.DBPassword = firstNonEmpty(
+		getConfigValue("database.password", "", ""),
+		os.Getenv("DB_PASS"),
+	)
+	env.JWTSecret = firstNonEmpty(
+		getConfigValue("server.jwt_secret", "", ""),
+		os.Getenv("JWT_SECRET"),
+	)
+	env.AuthHeader = firstNonEmpty(
+		getConfigValue("server.auth_header", "", ""),
+		os.Getenv("AUTH_HEADER"),
+	)
 
-	env.Environment = getEnvOrDefault("NODE_ENV", getEnvOrDefault("ENV",
-		viper.GetString("ENV")))
-	env.LogLevel = getEnvOrDefault("LOG_LEVEL",
-		getConfigValue("server.log.level", viper.GetString("LOG_LEVEL"), ""))
-	env.ServerPort = getEnvOrDefault("SERVER_PORT", env.ServerPort)
-	env.DBUsername = getEnvOrDefault("DB_USER", env.DBUsername)
-	env.DBPassword = getEnvOrDefault("DB_PASS", env.DBPassword)
-	env.DBHost = getEnvOrDefault("DB_HOST", env.DBHost)
-	env.DBPort = getEnvOrDefault("DB_PORT", env.DBPort)
-	env.DBName = getEnvOrDefault("DB_NAME", env.DBName)
+	var providers []OAuthProvider
+	if err := viper.UnmarshalKey("sso.providers", &providers); err == nil {
+		env.OAuthProviders = providers
+	}
 
 	return env
 }

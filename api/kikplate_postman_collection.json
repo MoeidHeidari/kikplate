@@ -1,0 +1,671 @@
+{
+  "info": {
+    "name": "Kickplate API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3001"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "verification_token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"moeidheidari\",\n  \"email\": \"moe@example.com\",\n  \"password\": \"strongpassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Has message\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.message).to.include(\"verify your account\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register - duplicate email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"someone_else\",\n  \"email\": \"moe@example.com\",\n  \"password\": \"strongpassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Has error\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.error).to.equal(\"email already registered\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register - duplicate username",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"moeidheidari\",\n  \"email\": \"other@example.com\",\n  \"password\": \"strongpassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Has error\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.error).to.equal(\"username already taken\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register - invalid body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "not-json",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Has error\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.error).to.equal(\"invalid request body\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/verify-email?token={{verification_token}}",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "verify-email"],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "{{verification_token}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Has token and account\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.token).to.be.a(\"string\");",
+                  "  pm.expect(body.account).to.be.an(\"object\");",
+                  "  pm.collectionVariables.set(\"token\", body.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify Email - missing token",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/verify-email",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "verify-email"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Has error\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.error).to.equal(\"token is required\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify Email - invalid token",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/verify-email?token=completely-wrong-token",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "verify-email"],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "completely-wrong-token"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Has error\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.error).to.equal(\"token invalid or expired\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"moe@example.com\",\n  \"password\": \"strongpassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Has token and account\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.token).to.be.a(\"string\");",
+                  "  pm.expect(body.account).to.be.an(\"object\");",
+                  "  pm.collectionVariables.set(\"token\", body.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - wrong password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"moe@example.com\",\n  \"password\": \"wrongpassword\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Has error\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.error).to.equal(\"invalid credentials\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - unverified account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"unverified@example.com\",\n  \"password\": \"strongpassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Has error\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.error).to.equal(\"email not verified\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - unknown email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nobody@example.com\",\n  \"password\": \"whatever\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Same error as wrong password\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.error).to.equal(\"invalid credentials\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - invalid body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "not-json",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Has error\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.error).to.equal(\"invalid request body\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+    "name": "Me",
+    "request": {
+        "method": "GET",
+        "header": [
+            {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+            }
+        ],
+        "url": {
+            "raw": "{{base_url}}/me",
+            "host": ["{{base_url}}"],
+            "path": ["me"]
+        }
+    },
+    "event": [
+        {
+            "listen": "test",
+            "script": {
+                "exec": [
+                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                    "pm.test(\"Has account_id\", () => {",
+                    "  const body = pm.response.json();",
+                    "  pm.expect(body.account_id).to.be.a(\"string\");",
+                    "  pm.expect(body.provider).to.be.a(\"string\");",
+                    "});"
+                ]
+            }
+        }
+    ]
+},
+        {
+          "name": "OAuth - GitHub Redirect",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/github/redirect",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "github", "redirect"]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.request.disableFollowRedirects = true;"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 307\", () => pm.response.to.have.status(307));",
+                  "pm.test(\"Has Location header pointing to GitHub\", () => {",
+                  "  const location = pm.response.headers.get(\"Location\");",
+                  "  pm.expect(location).to.include(\"github.com/login/oauth/authorize\");",
+                  "  pm.expect(location).to.include(\"state=\");",
+                  "});",
+                  "pm.test(\"Has oauth_state cookie\", () => {",
+                  "  const cookie = pm.cookies.get(\"oauth_state\");",
+                  "  pm.expect(cookie).to.not.be.undefined;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "OAuth - GitHub Redirect (open in browser)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/github/redirect",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "github", "redirect"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Redirected to GitHub\", () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 307]);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.token) {",
+                  "    pm.collectionVariables.set(\"token\", body.token);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "OAuth - GitHub Callback",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/github/callback?code={{github_code}}&state={{oauth_state}}",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "github", "callback"],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "{{github_code}}"
+                },
+                {
+                  "key": "state",
+                  "value": "{{oauth_state}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Has token and account\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.token).to.be.a(\"string\");",
+                  "  pm.expect(body.account).to.be.an(\"object\");",
+                  "  pm.expect(body.account.provider).to.equal(\"github\");",
+                  "  pm.collectionVariables.set(\"token\", body.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "OAuth - Unknown Provider",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/unknown/redirect",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "unknown", "redirect"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Has error\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.error).to.equal(\"oauth provider not configured\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "OAuth - Callback missing code",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/github/callback?state=some-state",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "github", "callback"],
+              "query": [
+                {
+                  "key": "state",
+                  "value": "some-state"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Has error\", () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.error).to.be.oneOf([\"missing oauth code\", \"invalid oauth state\"]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

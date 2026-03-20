@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/kickplate/api/lib"
 	"github.com/kickplate/api/model"
 	"github.com/kickplate/api/repository"
 	"gorm.io/gorm"
@@ -13,8 +14,8 @@ type plateReviewRepository struct {
 	db *gorm.DB
 }
 
-func NewPlateReviewRepository(db *gorm.DB) repository.PlateReviewRepository {
-	return &plateReviewRepository{db: db}
+func NewPlateReviewRepository(db lib.Database) repository.PlateReviewRepository {
+	return &plateReviewRepository{db: db.DB}
 }
 
 func (r *plateReviewRepository) Create(ctx context.Context, review *model.PlateReview) error {

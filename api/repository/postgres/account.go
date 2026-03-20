@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/kickplate/api/lib"
 	"github.com/kickplate/api/model"
 	"github.com/kickplate/api/repository"
 	"gorm.io/gorm"
@@ -13,8 +14,8 @@ type accountRepository struct {
 	db *gorm.DB
 }
 
-func NewAccountRepository(db *gorm.DB) repository.AccountRepository {
-	return &accountRepository{db: db}
+func NewAccountRepository(db lib.Database) repository.AccountRepository {
+	return &accountRepository{db: db.DB}
 }
 
 func (r *accountRepository) Create(ctx context.Context, account *model.Account) error {

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/kickplate/api/lib"
 	"github.com/kickplate/api/model"
 	"github.com/kickplate/api/repository"
 	"gorm.io/gorm"
@@ -13,8 +14,8 @@ type badgeRepository struct {
 	db *gorm.DB
 }
 
-func NewBadgeRepository(db *gorm.DB) repository.BadgeRepository {
-	return &badgeRepository{db: db}
+func NewBadgeRepository(db lib.Database) repository.BadgeRepository {
+	return &badgeRepository{db: db.DB}
 }
 
 func (r *badgeRepository) Create(ctx context.Context, badge *model.Badge) error {
