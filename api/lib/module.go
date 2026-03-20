@@ -1,6 +1,9 @@
 package lib
 
-import "go.uber.org/fx"
+import (
+	"github.com/joho/godotenv"
+	"go.uber.org/fx"
+)
 
 var Module = fx.Options(
 	fx.Provide(NewEnv),
@@ -8,3 +11,7 @@ var Module = fx.Options(
 	fx.Provide(NewRequestHandler),
 	fx.Provide(NewDatabase),
 )
+
+func init() {
+	godotenv.Load()
+}

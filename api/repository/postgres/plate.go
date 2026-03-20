@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/kickplate/api/lib"
 	"github.com/kickplate/api/model"
 	"github.com/kickplate/api/repository"
 	"gorm.io/gorm"
@@ -13,8 +14,8 @@ type plateRepository struct {
 	db *gorm.DB
 }
 
-func NewPlateRepository(db *gorm.DB) repository.PlateRepository {
-	return &plateRepository{db: db}
+func NewPlateRepository(db lib.Database) repository.PlateRepository {
+	return &plateRepository{db: db.DB}
 }
 
 func (r *plateRepository) Create(ctx context.Context, plate *model.Plate) error {

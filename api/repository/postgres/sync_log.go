@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/kickplate/api/lib"
 	"github.com/kickplate/api/model"
 	"github.com/kickplate/api/repository"
 	"gorm.io/gorm"
@@ -14,8 +15,8 @@ type syncLogRepository struct {
 	db *gorm.DB
 }
 
-func NewSyncLogRepository(db *gorm.DB) repository.SyncLogRepository {
-	return &syncLogRepository{db: db}
+func NewSyncLogRepository(db lib.Database) repository.SyncLogRepository {
+	return &syncLogRepository{db: db.DB}
 }
 
 func (r *syncLogRepository) Create(ctx context.Context, log *model.SyncLog) error {

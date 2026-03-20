@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/kickplate/api/lib"
 	"github.com/kickplate/api/model"
 	"github.com/kickplate/api/repository"
 	"gorm.io/gorm"
@@ -13,8 +14,8 @@ type plateTagRepository struct {
 	db *gorm.DB
 }
 
-func NewPlateTagRepository(db *gorm.DB) repository.PlateTagRepository {
-	return &plateTagRepository{db: db}
+func NewPlateTagRepository(db lib.Database) repository.PlateTagRepository {
+	return &plateTagRepository{db: db.DB}
 }
 
 func (r *plateTagRepository) CreateMany(ctx context.Context, plateID uuid.UUID, tags []string) error {

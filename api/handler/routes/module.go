@@ -6,6 +6,7 @@ import (
 
 var Module = fx.Options(
 	fx.Provide(NewRoutes),
+	fx.Provide(NewAuthRoutes),
 	fx.Provide(NewHelloRoutes),
 )
 
@@ -17,9 +18,11 @@ type Routes []Route
 
 func NewRoutes(
 	helloRoutes HelloRoutes,
+	authRoutes AuthRoutes,
 ) Routes {
 	return Routes{
 		helloRoutes,
+		authRoutes,
 	}
 }
 
