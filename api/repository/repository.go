@@ -8,6 +8,28 @@ import (
 	"github.com/kickplate/api/model"
 )
 
+type PlateFilter struct {
+	Type       *model.PlateType
+	Status     *model.PlateStatus
+	Visibility *model.PlateVisibility
+	Category   string
+	Tags       []string
+	OwnerID    *uuid.UUID
+	Search     string
+	Page       int
+	Limit      int
+}
+
+type PlateSyncState struct {
+	SyncStatus          model.SyncStatus
+	SyncError           *string
+	LastSyncedAt        *time.Time
+	NextSyncAt          *time.Time
+	ConsecutiveFailures int
+	IsVerified          bool
+	VerifiedAt          *time.Time
+	Metadata            []byte
+}
 type UserRepository interface {
 	Create(ctx context.Context, user *model.User) error
 	GetByID(ctx context.Context, id uuid.UUID) (*model.User, error)
@@ -86,27 +108,4 @@ type SyncLogRepository interface {
 	Create(ctx context.Context, log *model.SyncLog) error
 	ListByPlate(ctx context.Context, plateID uuid.UUID, limit int) ([]*model.SyncLog, error)
 	DeleteOlderThan(ctx context.Context, t time.Time) error
-}
-
-type PlateFilter struct {
-	Type       *model.PlateType
-	Status     *model.PlateStatus
-	Visibility *model.PlateVisibility
-	Category   string
-	Tags       []string
-	OwnerID    *uuid.UUID
-	Search     string
-	Page       int
-	Limit      int
-}
-
-type PlateSyncState struct {
-	SyncStatus          model.SyncStatus
-	SyncError           *string
-	LastSyncedAt        *time.Time
-	NextSyncAt          *time.Time
-	ConsecutiveFailures int
-	IsVerified          bool
-	VerifiedAt          *time.Time
-	Metadata            []byte
 }

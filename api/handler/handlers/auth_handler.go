@@ -7,16 +7,16 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kickplate/api/handler/middleware"
 	"github.com/kickplate/api/lib"
-	"github.com/kickplate/api/service"
+	"github.com/kickplate/api/service/auth"
 )
 
 type AuthHandler struct {
-	authService service.AuthService
+	authService auth.AuthService
 	logger      lib.Logger
 }
 
 func NewAuthHandler(
-	authService service.AuthService,
+	authService auth.AuthService,
 	logger lib.Logger,
 ) AuthHandler {
 	return AuthHandler{
@@ -26,7 +26,7 @@ func NewAuthHandler(
 }
 
 func (h AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var input service.RegisterInput
+	var input auth.RegisterInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -64,7 +64,7 @@ func (h AuthHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h AuthHandler) LoginLocal(w http.ResponseWriter, r *http.Request) {
-	var input service.LoginInput
+	var input auth.LoginInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -86,7 +86,7 @@ func (h AuthHandler) LoginLocal(w http.ResponseWriter, r *http.Request) {
 func (h AuthHandler) OAuthRedirect(w http.ResponseWriter, r *http.Request) {
 	provider := chi.URLParam(r, "provider")
 
-	result, err := h.authService.OAuthRedirect(r.Context(), service.OAuthRedirectInput{
+	result, err := h.authService.OAuthRedirect(r.Context(), auth.OAuthRedirectInput{
 		Provider: provider,
 	})
 	if err != nil {
@@ -121,7 +121,7 @@ func (h AuthHandler) OAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.authService.OAuthCallback(r.Context(), service.OAuthCallbackInput{
+	result, err := h.authService.OAuthCallback(r.Context(), auth.OAuthCallbackInput{
 		Provider: provider,
 		Code:     code,
 		State:    stateCookie.Value,

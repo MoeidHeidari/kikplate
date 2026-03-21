@@ -5,7 +5,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/kickplate/api/service"
+	"github.com/kickplate/api/service/auth"
+	plateservice "github.com/kickplate/api/service/plate"
 )
 
 func respondJSON(w http.ResponseWriter, status int, body any) {
@@ -20,24 +21,38 @@ func respondError(w http.ResponseWriter, status int, message string) {
 
 func respondServiceError(w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, service.ErrEmailTaken):
+	case errors.Is(err, auth.ErrEmailTaken):
 		respondError(w, http.StatusConflict, err.Error())
-	case errors.Is(err, service.ErrUsernameTaken):
+	case errors.Is(err, auth.ErrUsernameTaken):
 		respondError(w, http.StatusConflict, err.Error())
-	case errors.Is(err, service.ErrInvalidPassword):
+	case errors.Is(err, auth.ErrInvalidPassword):
 		respondError(w, http.StatusUnauthorized, err.Error())
-	case errors.Is(err, service.ErrAccountInactive):
+	case errors.Is(err, auth.ErrAccountInactive):
 		respondError(w, http.StatusForbidden, err.Error())
-	case errors.Is(err, service.ErrTokenInvalid):
+	case errors.Is(err, auth.ErrTokenInvalid):
 		respondError(w, http.StatusUnprocessableEntity, err.Error())
-	case errors.Is(err, service.ErrNotFound):
+	case errors.Is(err, auth.ErrNotFound):
 		respondError(w, http.StatusNotFound, err.Error())
-	case errors.Is(err, service.ErrUnauthorized):
+	case errors.Is(err, auth.ErrUnauthorized):
 		respondError(w, http.StatusUnauthorized, err.Error())
-	case errors.Is(err, service.ErrProviderNotFound):
+	case errors.Is(err, auth.ErrProviderNotFound):
 		respondError(w, http.StatusBadRequest, err.Error())
-	case errors.Is(err, service.ErrOAuthFailed):
+	case errors.Is(err, auth.ErrOAuthFailed):
 		respondError(w, http.StatusBadGateway, err.Error())
+	case errors.Is(err, plateservice.ErrNotFound):
+		respondError(w, http.StatusNotFound, err.Error())
+	case errors.Is(err, plateservice.ErrForbidden):
+		respondError(w, http.StatusForbidden, err.Error())
+	case errors.Is(err, plateservice.ErrConflict):
+		respondError(w, http.StatusConflict, err.Error())
+	case errors.Is(err, plateservice.ErrOwnerMismatch):
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
+	case errors.Is(err, plateservice.ErrMissingYAML):
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
+	case errors.Is(err, plateservice.ErrFetchFailed):
+		respondError(w, http.StatusBadGateway, err.Error())
+	case errors.Is(err, plateservice.ErrInvalidInput):
+		respondError(w, http.StatusBadRequest, err.Error())
 	default:
 		respondError(w, http.StatusInternalServerError, "internal server error")
 	}

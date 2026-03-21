@@ -1,4 +1,4 @@
-package service_test
+package auth_test
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kickplate/api/lib"
 	"github.com/kickplate/api/model"
-	"github.com/kickplate/api/service"
+	"github.com/kickplate/api/service/auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
@@ -188,8 +188,8 @@ func newTestEnvWithProvider(name, clientID, clientSecret string) lib.Env {
 	}
 }
 
-func newTestService() service.AuthService {
-	return service.NewAuthService(
+func newTestService() auth.AuthService {
+	return auth.NewAuthService(
 		newMockUserRepo(),
 		newMockAccountRepo(),
 		newMockEmailVerRepo(),
@@ -212,7 +212,7 @@ func bcryptHash(password string) (string, error) {
 func TestRegister_Success(t *testing.T) {
 	svc := newTestService()
 
-	err := svc.Register(context.Background(), service.RegisterInput{
+	err := svc.Register(context.Background(), auth.RegisterInput{
 		Username: "moeidheidari",
 		Email:    "moe@example.com",
 		Password: "strongpassword123",
@@ -223,7 +223,7 @@ func TestRegister_Success(t *testing.T) {
 
 func TestRegister_DuplicateEmail(t *testing.T) {
 	svc := newTestService()
-	input := service.RegisterInput{
+	input := auth.RegisterInput{
 		Username: "moeidheidari",
 		Email:    "moe@example.com",
 		Password: "strongpassword123",
@@ -234,25 +234,25 @@ func TestRegister_DuplicateEmail(t *testing.T) {
 	input.Username = "someone_else"
 	err := svc.Register(context.Background(), input)
 
-	assert.ErrorIs(t, err, service.ErrEmailTaken)
+	assert.ErrorIs(t, err, auth.ErrEmailTaken)
 }
 
 func TestRegister_DuplicateUsername(t *testing.T) {
 	svc := newTestService()
 
-	require.NoError(t, svc.Register(context.Background(), service.RegisterInput{
+	require.NoError(t, svc.Register(context.Background(), auth.RegisterInput{
 		Username: "moeidheidari",
 		Email:    "moe@example.com",
 		Password: "strongpassword123",
 	}))
 
-	err := svc.Register(context.Background(), service.RegisterInput{
+	err := svc.Register(context.Background(), auth.RegisterInput{
 		Username: "moeidheidari",
 		Email:    "other@example.com",
 		Password: "strongpassword123",
 	})
 
-	assert.ErrorIs(t, err, service.ErrUsernameTaken)
+	assert.ErrorIs(t, err, auth.ErrUsernameTaken)
 }
 
 // ─── VerifyEmail ──────────────────────────────────────────────────────────────
@@ -262,12 +262,12 @@ func TestVerifyEmail_FullRoundTrip(t *testing.T) {
 	accountRepo := newMockAccountRepo()
 	emailVerRepo := newMockEmailVerRepo()
 
-	svc := service.NewAuthService(
+	svc := auth.NewAuthService(
 		userRepo, accountRepo, emailVerRepo,
 		lib.GetLogger(), newTestEnv(),
 	)
 
-	require.NoError(t, svc.Register(context.Background(), service.RegisterInput{
+	require.NoError(t, svc.Register(context.Background(), auth.RegisterInput{
 		Username: "moeidheidari",
 		Email:    "moe@example.com",
 		Password: "hunter2",
@@ -303,7 +303,7 @@ func TestVerifyEmail_InvalidToken(t *testing.T) {
 	result, err := svc.VerifyEmail(context.Background(), "completely-wrong-token")
 
 	assert.Nil(t, result)
-	assert.ErrorIs(t, err, service.ErrTokenInvalid)
+	assert.ErrorIs(t, err, auth.ErrTokenInvalid)
 }
 
 func TestVerifyEmail_ExpiredToken(t *testing.T) {
@@ -311,7 +311,7 @@ func TestVerifyEmail_ExpiredToken(t *testing.T) {
 	accountRepo := newMockAccountRepo()
 	emailVerRepo := newMockEmailVerRepo()
 
-	svc := service.NewAuthService(
+	svc := auth.NewAuthService(
 		userRepo, accountRepo, emailVerRepo,
 		lib.GetLogger(), newTestEnv(),
 	)
@@ -339,7 +339,7 @@ func TestVerifyEmail_ExpiredToken(t *testing.T) {
 	result, err := svc.VerifyEmail(context.Background(), knownRaw)
 
 	assert.Nil(t, result)
-	assert.ErrorIs(t, err, service.ErrTokenInvalid)
+	assert.ErrorIs(t, err, auth.ErrTokenInvalid)
 }
 
 func TestVerifyEmail_UsedToken(t *testing.T) {
@@ -347,7 +347,7 @@ func TestVerifyEmail_UsedToken(t *testing.T) {
 	accountRepo := newMockAccountRepo()
 	emailVerRepo := newMockEmailVerRepo()
 
-	svc := service.NewAuthService(
+	svc := auth.NewAuthService(
 		userRepo, accountRepo, emailVerRepo,
 		lib.GetLogger(), newTestEnv(),
 	)
@@ -375,7 +375,7 @@ func TestVerifyEmail_UsedToken(t *testing.T) {
 	result, err := svc.VerifyEmail(context.Background(), knownRaw)
 
 	assert.Nil(t, result)
-	assert.ErrorIs(t, err, service.ErrTokenInvalid)
+	assert.ErrorIs(t, err, auth.ErrTokenInvalid)
 }
 
 // ─── LoginLocal ───────────────────────────────────────────────────────────────
@@ -384,7 +384,7 @@ func TestLoginLocal_Success(t *testing.T) {
 	userRepo := newMockUserRepo()
 	accountRepo := newMockAccountRepo()
 	emailVerRepo := newMockEmailVerRepo()
-	svc := service.NewAuthService(
+	svc := auth.NewAuthService(
 		userRepo, accountRepo, emailVerRepo,
 		lib.GetLogger(), newTestEnv(),
 	)
@@ -400,7 +400,7 @@ func TestLoginLocal_Success(t *testing.T) {
 		IsActive:     true,
 	}))
 
-	result, err := svc.LoginLocal(context.Background(), service.LoginInput{
+	result, err := svc.LoginLocal(context.Background(), auth.LoginInput{
 		Email:    "moe@example.com",
 		Password: "correctpassword",
 	})
@@ -414,7 +414,7 @@ func TestLoginLocal_WrongPassword(t *testing.T) {
 	userRepo := newMockUserRepo()
 	accountRepo := newMockAccountRepo()
 	emailVerRepo := newMockEmailVerRepo()
-	svc := service.NewAuthService(
+	svc := auth.NewAuthService(
 		userRepo, accountRepo, emailVerRepo,
 		lib.GetLogger(), newTestEnv(),
 	)
@@ -430,20 +430,20 @@ func TestLoginLocal_WrongPassword(t *testing.T) {
 		IsActive:     true,
 	}))
 
-	result, err := svc.LoginLocal(context.Background(), service.LoginInput{
+	result, err := svc.LoginLocal(context.Background(), auth.LoginInput{
 		Email:    "moe@example.com",
 		Password: "wrongpassword",
 	})
 
 	assert.Nil(t, result)
-	assert.ErrorIs(t, err, service.ErrInvalidPassword)
+	assert.ErrorIs(t, err, auth.ErrInvalidPassword)
 }
 
 func TestLoginLocal_OAuthUser_CannotLoginWithPassword(t *testing.T) {
 	userRepo := newMockUserRepo()
 	accountRepo := newMockAccountRepo()
 	emailVerRepo := newMockEmailVerRepo()
-	svc := service.NewAuthService(
+	svc := auth.NewAuthService(
 		userRepo, accountRepo, emailVerRepo,
 		lib.GetLogger(), newTestEnv(),
 	)
@@ -456,32 +456,32 @@ func TestLoginLocal_OAuthUser_CannotLoginWithPassword(t *testing.T) {
 		IsActive:     true,
 	}))
 
-	result, err := svc.LoginLocal(context.Background(), service.LoginInput{
+	result, err := svc.LoginLocal(context.Background(), auth.LoginInput{
 		Email:    "moe@example.com",
 		Password: "anypassword",
 	})
 
 	assert.Nil(t, result)
-	assert.ErrorIs(t, err, service.ErrInvalidPassword)
+	assert.ErrorIs(t, err, auth.ErrInvalidPassword)
 }
 
 func TestLoginLocal_UnknownEmail(t *testing.T) {
 	svc := newTestService()
 
-	result, err := svc.LoginLocal(context.Background(), service.LoginInput{
+	result, err := svc.LoginLocal(context.Background(), auth.LoginInput{
 		Email:    "nobody@example.com",
 		Password: "whatever",
 	})
 
 	assert.Nil(t, result)
-	assert.ErrorIs(t, err, service.ErrInvalidPassword)
+	assert.ErrorIs(t, err, auth.ErrInvalidPassword)
 }
 
 func TestLoginLocal_InactiveAccount(t *testing.T) {
 	userRepo := newMockUserRepo()
 	accountRepo := newMockAccountRepo()
 	emailVerRepo := newMockEmailVerRepo()
-	svc := service.NewAuthService(
+	svc := auth.NewAuthService(
 		userRepo, accountRepo, emailVerRepo,
 		lib.GetLogger(), newTestEnv(),
 	)
@@ -497,24 +497,24 @@ func TestLoginLocal_InactiveAccount(t *testing.T) {
 		IsActive:     false,
 	}))
 
-	result, err := svc.LoginLocal(context.Background(), service.LoginInput{
+	result, err := svc.LoginLocal(context.Background(), auth.LoginInput{
 		Email:    "moe@example.com",
 		Password: "correctpassword",
 	})
 
 	assert.Nil(t, result)
-	assert.ErrorIs(t, err, service.ErrAccountInactive)
+	assert.ErrorIs(t, err, auth.ErrAccountInactive)
 }
 
 // ─── OAuthRedirect ────────────────────────────────────────────────────────────
 
 func TestOAuthRedirect_KnownProvider_ReturnsURL(t *testing.T) {
-	svc := service.NewAuthService(
+	svc := auth.NewAuthService(
 		newMockUserRepo(), newMockAccountRepo(), newMockEmailVerRepo(),
 		lib.GetLogger(), newTestEnvWithProvider("github", "client-id", "client-secret"),
 	)
 
-	result, err := svc.OAuthRedirect(context.Background(), service.OAuthRedirectInput{
+	result, err := svc.OAuthRedirect(context.Background(), auth.OAuthRedirectInput{
 		Provider: "github",
 	})
 
@@ -528,24 +528,24 @@ func TestOAuthRedirect_KnownProvider_ReturnsURL(t *testing.T) {
 func TestOAuthRedirect_UnknownProvider_ReturnsError(t *testing.T) {
 	svc := newTestService()
 
-	result, err := svc.OAuthRedirect(context.Background(), service.OAuthRedirectInput{
+	result, err := svc.OAuthRedirect(context.Background(), auth.OAuthRedirectInput{
 		Provider: "unknown-provider",
 	})
 
 	assert.Nil(t, result)
-	assert.ErrorIs(t, err, service.ErrProviderNotFound)
+	assert.ErrorIs(t, err, auth.ErrProviderNotFound)
 }
 
 func TestOAuthRedirect_StateIsUniquePerCall(t *testing.T) {
-	svc := service.NewAuthService(
+	svc := auth.NewAuthService(
 		newMockUserRepo(), newMockAccountRepo(), newMockEmailVerRepo(),
 		lib.GetLogger(), newTestEnvWithProvider("github", "client-id", "client-secret"),
 	)
 
-	r1, err := svc.OAuthRedirect(context.Background(), service.OAuthRedirectInput{Provider: "github"})
+	r1, err := svc.OAuthRedirect(context.Background(), auth.OAuthRedirectInput{Provider: "github"})
 	require.NoError(t, err)
 
-	r2, err := svc.OAuthRedirect(context.Background(), service.OAuthRedirectInput{Provider: "github"})
+	r2, err := svc.OAuthRedirect(context.Background(), auth.OAuthRedirectInput{Provider: "github"})
 	require.NoError(t, err)
 
 	assert.NotEqual(t, r1.State, r2.State)
@@ -556,14 +556,14 @@ func TestOAuthRedirect_StateIsUniquePerCall(t *testing.T) {
 func TestOAuthCallback_UnknownProvider_ReturnsError(t *testing.T) {
 	svc := newTestService()
 
-	result, err := svc.OAuthCallback(context.Background(), service.OAuthCallbackInput{
+	result, err := svc.OAuthCallback(context.Background(), auth.OAuthCallbackInput{
 		Provider: "unknown-provider",
 		Code:     "some-code",
 		State:    "some-state",
 	})
 
 	assert.Nil(t, result)
-	assert.ErrorIs(t, err, service.ErrProviderNotFound)
+	assert.ErrorIs(t, err, auth.ErrProviderNotFound)
 }
 
 // ─── LoginHeader ──────────────────────────────────────────────────────────────
@@ -600,7 +600,7 @@ func TestOAuthCallback_FirstLogin_CreatesUserRow(t *testing.T) {
 	emailVerRepo := newMockEmailVerRepo()
 
 	env := newTestEnvWithProvider("github", "client-id", "client-secret")
-	svc := service.NewAuthService(userRepo, accountRepo, emailVerRepo, lib.GetLogger(), env)
+	svc := auth.NewAuthService(userRepo, accountRepo, emailVerRepo, lib.GetLogger(), env)
 
 	_ = svc
 	_ = userRepo
@@ -621,7 +621,7 @@ func TestOAuthCallback_DuplicateEmail_ReuseExistingUser(t *testing.T) {
 	accountRepo := newMockAccountRepo()
 	emailVerRepo := newMockEmailVerRepo()
 
-	svc := service.NewAuthService(
+	svc := auth.NewAuthService(
 		userRepo, accountRepo, emailVerRepo,
 		lib.GetLogger(), newTestEnv(),
 	)
@@ -643,7 +643,7 @@ func TestGetMe_LocalUser_ReturnsFullProfile(t *testing.T) {
 	userRepo := newMockUserRepo()
 	accountRepo := newMockAccountRepo()
 	emailVerRepo := newMockEmailVerRepo()
-	svc := service.NewAuthService(userRepo, accountRepo, emailVerRepo, lib.GetLogger(), newTestEnv())
+	svc := auth.NewAuthService(userRepo, accountRepo, emailVerRepo, lib.GetLogger(), newTestEnv())
 
 	userID := uuid.New()
 	require.NoError(t, userRepo.Create(context.Background(), &model.User{
@@ -680,5 +680,5 @@ func TestGetMe_UnknownAccount_ReturnsNotFound(t *testing.T) {
 	result, err := svc.GetMe(context.Background(), uuid.New())
 
 	assert.Nil(t, result)
-	assert.ErrorIs(t, err, service.ErrNotFound)
+	assert.ErrorIs(t, err, auth.ErrNotFound)
 }

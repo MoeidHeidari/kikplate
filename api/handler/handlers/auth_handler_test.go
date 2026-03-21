@@ -15,7 +15,7 @@ import (
 	"github.com/kickplate/api/handler/middleware"
 	"github.com/kickplate/api/lib"
 	"github.com/kickplate/api/model"
-	"github.com/kickplate/api/service"
+	"github.com/kickplate/api/service/auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,48 +23,48 @@ import (
 // ─── mock auth service ────────────────────────────────────────────────────────
 
 type mockAuthService struct {
-	registerFn      func(ctx context.Context, input service.RegisterInput) error
-	verifyEmailFn   func(ctx context.Context, token string) (*service.AuthResult, error)
-	loginLocalFn    func(ctx context.Context, input service.LoginInput) (*service.AuthResult, error)
-	oauthRedirectFn func(ctx context.Context, input service.OAuthRedirectInput) (*service.OAuthRedirectResult, error)
-	oauthCallbackFn func(ctx context.Context, input service.OAuthCallbackInput) (*service.AuthResult, error)
-	loginHeaderFn   func(ctx context.Context, providerUserID string) (*service.AuthResult, error)
-	getMeFn         func(ctx context.Context, accountID uuid.UUID) (*service.MeResult, error)
+	registerFn      func(ctx context.Context, input auth.RegisterInput) error
+	verifyEmailFn   func(ctx context.Context, token string) (*auth.AuthResult, error)
+	loginLocalFn    func(ctx context.Context, input auth.LoginInput) (*auth.AuthResult, error)
+	oauthRedirectFn func(ctx context.Context, input auth.OAuthRedirectInput) (*auth.OAuthRedirectResult, error)
+	oauthCallbackFn func(ctx context.Context, input auth.OAuthCallbackInput) (*auth.AuthResult, error)
+	loginHeaderFn   func(ctx context.Context, providerUserID string) (*auth.AuthResult, error)
+	getMeFn         func(ctx context.Context, accountID uuid.UUID) (*auth.MeResult, error)
 }
 
-func (m *mockAuthService) Register(ctx context.Context, input service.RegisterInput) error {
+func (m *mockAuthService) Register(ctx context.Context, input auth.RegisterInput) error {
 	return m.registerFn(ctx, input)
 }
-func (m *mockAuthService) VerifyEmail(ctx context.Context, token string) (*service.AuthResult, error) {
+func (m *mockAuthService) VerifyEmail(ctx context.Context, token string) (*auth.AuthResult, error) {
 	return m.verifyEmailFn(ctx, token)
 }
-func (m *mockAuthService) LoginLocal(ctx context.Context, input service.LoginInput) (*service.AuthResult, error) {
+func (m *mockAuthService) LoginLocal(ctx context.Context, input auth.LoginInput) (*auth.AuthResult, error) {
 	return m.loginLocalFn(ctx, input)
 }
-func (m *mockAuthService) OAuthRedirect(ctx context.Context, input service.OAuthRedirectInput) (*service.OAuthRedirectResult, error) {
+func (m *mockAuthService) OAuthRedirect(ctx context.Context, input auth.OAuthRedirectInput) (*auth.OAuthRedirectResult, error) {
 	return m.oauthRedirectFn(ctx, input)
 }
-func (m *mockAuthService) OAuthCallback(ctx context.Context, input service.OAuthCallbackInput) (*service.AuthResult, error) {
+func (m *mockAuthService) OAuthCallback(ctx context.Context, input auth.OAuthCallbackInput) (*auth.AuthResult, error) {
 	return m.oauthCallbackFn(ctx, input)
 }
-func (m *mockAuthService) LoginHeader(ctx context.Context, providerUserID string) (*service.AuthResult, error) {
+func (m *mockAuthService) LoginHeader(ctx context.Context, providerUserID string) (*auth.AuthResult, error) {
 	return m.loginHeaderFn(ctx, providerUserID)
 }
 
-func (m *mockAuthService) GetMe(ctx context.Context, accountID uuid.UUID) (*service.MeResult, error) {
+func (m *mockAuthService) GetMe(ctx context.Context, accountID uuid.UUID) (*auth.MeResult, error) {
 	return m.getMeFn(ctx, accountID)
 }
 
-var _ service.AuthService = (*mockAuthService)(nil)
+var _ auth.AuthService = (*mockAuthService)(nil)
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-func newHandler(svc service.AuthService) handlers.AuthHandler {
+func newHandler(svc auth.AuthService) handlers.AuthHandler {
 	return handlers.NewAuthHandler(svc, lib.GetLogger())
 }
 
-func fakeResult() *service.AuthResult {
-	return &service.AuthResult{
+func fakeResult() *auth.AuthResult {
+	return &auth.AuthResult{
 		Token: "signed.jwt.token",
 		Account: model.Account{
 			ID:             uuid.New(),
@@ -100,10 +100,10 @@ func routeRequest(r *http.Request, key, value string) *http.Request {
 
 func TestRegister_Success(t *testing.T) {
 	svc := &mockAuthService{
-		registerFn: func(_ context.Context, _ service.RegisterInput) error { return nil },
+		registerFn: func(_ context.Context, _ auth.RegisterInput) error { return nil },
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/auth/register", jsonBody(t, service.RegisterInput{
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", jsonBody(t, auth.RegisterInput{
 		Username: "moeidheidari",
 		Email:    "moe@example.com",
 		Password: "strongpassword",
@@ -132,10 +132,10 @@ func TestRegister_InvalidBody(t *testing.T) {
 
 func TestRegister_EmailTaken(t *testing.T) {
 	svc := &mockAuthService{
-		registerFn: func(_ context.Context, _ service.RegisterInput) error { return service.ErrEmailTaken },
+		registerFn: func(_ context.Context, _ auth.RegisterInput) error { return auth.ErrEmailTaken },
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/auth/register", jsonBody(t, service.RegisterInput{
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", jsonBody(t, auth.RegisterInput{
 		Username: "moeidheidari", Email: "moe@example.com", Password: "strongpassword",
 	}))
 	rec := httptest.NewRecorder()
@@ -143,15 +143,15 @@ func TestRegister_EmailTaken(t *testing.T) {
 	newHandler(svc).Register(rec, req)
 
 	assert.Equal(t, http.StatusConflict, rec.Code)
-	assert.Equal(t, service.ErrEmailTaken.Error(), decodeBody(t, rec)["error"])
+	assert.Equal(t, auth.ErrEmailTaken.Error(), decodeBody(t, rec)["error"])
 }
 
 func TestRegister_UsernameTaken(t *testing.T) {
 	svc := &mockAuthService{
-		registerFn: func(_ context.Context, _ service.RegisterInput) error { return service.ErrUsernameTaken },
+		registerFn: func(_ context.Context, _ auth.RegisterInput) error { return auth.ErrUsernameTaken },
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/auth/register", jsonBody(t, service.RegisterInput{
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", jsonBody(t, auth.RegisterInput{
 		Username: "moeidheidari", Email: "moe@example.com", Password: "strongpassword",
 	}))
 	rec := httptest.NewRecorder()
@@ -159,17 +159,17 @@ func TestRegister_UsernameTaken(t *testing.T) {
 	newHandler(svc).Register(rec, req)
 
 	assert.Equal(t, http.StatusConflict, rec.Code)
-	assert.Equal(t, service.ErrUsernameTaken.Error(), decodeBody(t, rec)["error"])
+	assert.Equal(t, auth.ErrUsernameTaken.Error(), decodeBody(t, rec)["error"])
 }
 
 func TestRegister_UnexpectedError_Returns500(t *testing.T) {
 	svc := &mockAuthService{
-		registerFn: func(_ context.Context, _ service.RegisterInput) error {
+		registerFn: func(_ context.Context, _ auth.RegisterInput) error {
 			return errors.New("database exploded")
 		},
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/auth/register", jsonBody(t, service.RegisterInput{
+	req := httptest.NewRequest(http.MethodPost, "/auth/register", jsonBody(t, auth.RegisterInput{
 		Username: "moeidheidari", Email: "moe@example.com", Password: "strongpassword",
 	}))
 	rec := httptest.NewRecorder()
@@ -185,7 +185,7 @@ func TestRegister_UnexpectedError_Returns500(t *testing.T) {
 func TestVerifyEmail_Success(t *testing.T) {
 	result := fakeResult()
 	svc := &mockAuthService{
-		verifyEmailFn: func(_ context.Context, token string) (*service.AuthResult, error) {
+		verifyEmailFn: func(_ context.Context, token string) (*auth.AuthResult, error) {
 			assert.Equal(t, "valid-raw-token", token)
 			return result, nil
 		},
@@ -216,8 +216,8 @@ func TestVerifyEmail_MissingToken(t *testing.T) {
 
 func TestVerifyEmail_InvalidToken(t *testing.T) {
 	svc := &mockAuthService{
-		verifyEmailFn: func(_ context.Context, _ string) (*service.AuthResult, error) {
-			return nil, service.ErrTokenInvalid
+		verifyEmailFn: func(_ context.Context, _ string) (*auth.AuthResult, error) {
+			return nil, auth.ErrTokenInvalid
 		},
 	}
 
@@ -227,7 +227,7 @@ func TestVerifyEmail_InvalidToken(t *testing.T) {
 	newHandler(svc).VerifyEmail(rec, req)
 
 	assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
-	assert.Equal(t, service.ErrTokenInvalid.Error(), decodeBody(t, rec)["error"])
+	assert.Equal(t, auth.ErrTokenInvalid.Error(), decodeBody(t, rec)["error"])
 }
 
 // ─── LoginLocal ───────────────────────────────────────────────────────────────
@@ -235,13 +235,13 @@ func TestVerifyEmail_InvalidToken(t *testing.T) {
 func TestLoginLocal_Success(t *testing.T) {
 	result := fakeResult()
 	svc := &mockAuthService{
-		loginLocalFn: func(_ context.Context, input service.LoginInput) (*service.AuthResult, error) {
+		loginLocalFn: func(_ context.Context, input auth.LoginInput) (*auth.AuthResult, error) {
 			assert.Equal(t, "moe@example.com", input.Email)
 			return result, nil
 		},
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/auth/login", jsonBody(t, service.LoginInput{
+	req := httptest.NewRequest(http.MethodPost, "/auth/login", jsonBody(t, auth.LoginInput{
 		Email: "moe@example.com", Password: "correctpassword",
 	}))
 	rec := httptest.NewRecorder()
@@ -267,12 +267,12 @@ func TestLoginLocal_InvalidBody(t *testing.T) {
 
 func TestLoginLocal_WrongPassword(t *testing.T) {
 	svc := &mockAuthService{
-		loginLocalFn: func(_ context.Context, _ service.LoginInput) (*service.AuthResult, error) {
-			return nil, service.ErrInvalidPassword
+		loginLocalFn: func(_ context.Context, _ auth.LoginInput) (*auth.AuthResult, error) {
+			return nil, auth.ErrInvalidPassword
 		},
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/auth/login", jsonBody(t, service.LoginInput{
+	req := httptest.NewRequest(http.MethodPost, "/auth/login", jsonBody(t, auth.LoginInput{
 		Email: "moe@example.com", Password: "wrongpassword",
 	}))
 	rec := httptest.NewRecorder()
@@ -280,17 +280,17 @@ func TestLoginLocal_WrongPassword(t *testing.T) {
 	newHandler(svc).LoginLocal(rec, req)
 
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
-	assert.Equal(t, service.ErrInvalidPassword.Error(), decodeBody(t, rec)["error"])
+	assert.Equal(t, auth.ErrInvalidPassword.Error(), decodeBody(t, rec)["error"])
 }
 
 func TestLoginLocal_InactiveAccount(t *testing.T) {
 	svc := &mockAuthService{
-		loginLocalFn: func(_ context.Context, _ service.LoginInput) (*service.AuthResult, error) {
-			return nil, service.ErrAccountInactive
+		loginLocalFn: func(_ context.Context, _ auth.LoginInput) (*auth.AuthResult, error) {
+			return nil, auth.ErrAccountInactive
 		},
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/auth/login", jsonBody(t, service.LoginInput{
+	req := httptest.NewRequest(http.MethodPost, "/auth/login", jsonBody(t, auth.LoginInput{
 		Email: "moe@example.com", Password: "correctpassword",
 	}))
 	rec := httptest.NewRecorder()
@@ -298,16 +298,16 @@ func TestLoginLocal_InactiveAccount(t *testing.T) {
 	newHandler(svc).LoginLocal(rec, req)
 
 	assert.Equal(t, http.StatusForbidden, rec.Code)
-	assert.Equal(t, service.ErrAccountInactive.Error(), decodeBody(t, rec)["error"])
+	assert.Equal(t, auth.ErrAccountInactive.Error(), decodeBody(t, rec)["error"])
 }
 
 // ─── OAuthRedirect ────────────────────────────────────────────────────────────
 
 func TestOAuthRedirect_Success(t *testing.T) {
 	svc := &mockAuthService{
-		oauthRedirectFn: func(_ context.Context, input service.OAuthRedirectInput) (*service.OAuthRedirectResult, error) {
+		oauthRedirectFn: func(_ context.Context, input auth.OAuthRedirectInput) (*auth.OAuthRedirectResult, error) {
 			assert.Equal(t, "github", input.Provider)
-			return &service.OAuthRedirectResult{
+			return &auth.OAuthRedirectResult{
 				URL:   "https://github.com/login/oauth/authorize?client_id=abc&state=xyz",
 				State: "xyz",
 			}, nil
@@ -331,8 +331,8 @@ func TestOAuthRedirect_Success(t *testing.T) {
 
 func TestOAuthRedirect_UnknownProvider(t *testing.T) {
 	svc := &mockAuthService{
-		oauthRedirectFn: func(_ context.Context, _ service.OAuthRedirectInput) (*service.OAuthRedirectResult, error) {
-			return nil, service.ErrProviderNotFound
+		oauthRedirectFn: func(_ context.Context, _ auth.OAuthRedirectInput) (*auth.OAuthRedirectResult, error) {
+			return nil, auth.ErrProviderNotFound
 		},
 	}
 
@@ -343,7 +343,7 @@ func TestOAuthRedirect_UnknownProvider(t *testing.T) {
 	newHandler(svc).OAuthRedirect(rec, req)
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
-	assert.Equal(t, service.ErrProviderNotFound.Error(), decodeBody(t, rec)["error"])
+	assert.Equal(t, auth.ErrProviderNotFound.Error(), decodeBody(t, rec)["error"])
 }
 
 // ─── OAuthCallback ────────────────────────────────────────────────────────────
@@ -353,7 +353,7 @@ func TestOAuthCallback_Success(t *testing.T) {
 	result.Account.Provider = "github"
 
 	svc := &mockAuthService{
-		oauthCallbackFn: func(_ context.Context, input service.OAuthCallbackInput) (*service.AuthResult, error) {
+		oauthCallbackFn: func(_ context.Context, input auth.OAuthCallbackInput) (*auth.AuthResult, error) {
 			assert.Equal(t, "github", input.Provider)
 			assert.Equal(t, "valid-code", input.Code)
 			return result, nil
@@ -415,8 +415,8 @@ func TestOAuthCallback_MissingStateCookie(t *testing.T) {
 
 func TestOAuthCallback_OAuthFailed(t *testing.T) {
 	svc := &mockAuthService{
-		oauthCallbackFn: func(_ context.Context, _ service.OAuthCallbackInput) (*service.AuthResult, error) {
-			return nil, service.ErrOAuthFailed
+		oauthCallbackFn: func(_ context.Context, _ auth.OAuthCallbackInput) (*auth.AuthResult, error) {
+			return nil, auth.ErrOAuthFailed
 		},
 	}
 
@@ -428,7 +428,7 @@ func TestOAuthCallback_OAuthFailed(t *testing.T) {
 	newHandler(svc).OAuthCallback(rec, req)
 
 	assert.Equal(t, http.StatusBadGateway, rec.Code)
-	assert.Equal(t, service.ErrOAuthFailed.Error(), decodeBody(t, rec)["error"])
+	assert.Equal(t, auth.ErrOAuthFailed.Error(), decodeBody(t, rec)["error"])
 }
 
 // ─── content-type and error leaking ──────────────────────────────────────────
@@ -485,20 +485,20 @@ func TestInternalErrors_NeverLeakDetails(t *testing.T) {
 		{
 			name: "register",
 			handler: newHandler(&mockAuthService{
-				registerFn: func(_ context.Context, _ service.RegisterInput) error { return internalErr },
+				registerFn: func(_ context.Context, _ auth.RegisterInput) error { return internalErr },
 			}).Register,
-			req: httptest.NewRequest(http.MethodPost, "/", jsonBody(t, service.RegisterInput{
+			req: httptest.NewRequest(http.MethodPost, "/", jsonBody(t, auth.RegisterInput{
 				Username: "u", Email: "e@e.com", Password: "p",
 			})),
 		},
 		{
 			name: "login",
 			handler: newHandler(&mockAuthService{
-				loginLocalFn: func(_ context.Context, _ service.LoginInput) (*service.AuthResult, error) {
+				loginLocalFn: func(_ context.Context, _ auth.LoginInput) (*auth.AuthResult, error) {
 					return nil, internalErr
 				},
 			}).LoginLocal,
-			req: httptest.NewRequest(http.MethodPost, "/", jsonBody(t, service.LoginInput{
+			req: httptest.NewRequest(http.MethodPost, "/", jsonBody(t, auth.LoginInput{
 				Email: "e@e.com", Password: "p",
 			})),
 		},
@@ -524,9 +524,9 @@ func TestMe_Success(t *testing.T) {
 	isActive := true
 
 	svc := &mockAuthService{
-		getMeFn: func(_ context.Context, id uuid.UUID) (*service.MeResult, error) {
+		getMeFn: func(_ context.Context, id uuid.UUID) (*auth.MeResult, error) {
 			assert.Equal(t, accountID, id)
-			return &service.MeResult{
+			return &auth.MeResult{
 				AccountID: accountID.String(),
 				Provider:  "local",
 				Username:  &username,

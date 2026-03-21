@@ -1,7 +1,12 @@
 package service
 
-import "go.uber.org/fx"
+import (
+	auth "github.com/kickplate/api/service/auth"
+	"github.com/kickplate/api/service/plate"
+	"go.uber.org/fx"
+)
 
 var Module = fx.Options(
-	fx.Provide(NewAuthService),
+	fx.Provide(auth.NewAuthService),
+	fx.Provide(plate.NewPlateService),
 )

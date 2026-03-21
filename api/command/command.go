@@ -11,6 +11,7 @@ import (
 
 var cmds = map[string]lib.Command{
 	"app:serve": NewServeCommand(),
+	"db:seed":   NewSeedCommand(),
 }
 
 // GetSubCommands gives a list of sub commands

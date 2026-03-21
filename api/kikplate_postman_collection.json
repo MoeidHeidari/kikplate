@@ -4,18 +4,11 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:3001"
-    },
-    {
-      "key": "token",
-      "value": ""
-    },
-    {
-      "key": "verification_token",
-      "value": ""
-    }
+    { "key": "base_url", "value": "http://localhost:3001" },
+    { "key": "token", "value": "" },
+    { "key": "verification_token", "value": "" },
+    { "key": "plate_id", "value": "" },
+    { "key": "plate_slug", "value": "" }
   ],
   "item": [
     {
@@ -25,645 +18,403 @@
           "name": "Register",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "register"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"moeidheidari\",\n  \"email\": \"moe@example.com\",\n  \"password\": \"strongpassword123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"moeidheidari\",\n  \"email\": \"moe@example.com\",\n  \"password\": \"strongpassword123\"\n}", "options": { "raw": { "language": "json" } } }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
-                  "pm.test(\"Has message\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.message).to.include(\"verify your account\");",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 201\", () => pm.response.to.have.status(201));", "pm.test(\"Has message\", () => { const body = pm.response.json(); pm.expect(body.message).to.include(\"verify your account\"); });"] } }]
         },
         {
           "name": "Register - duplicate email",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "register"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"someone_else\",\n  \"email\": \"moe@example.com\",\n  \"password\": \"strongpassword123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"someone_else\",\n  \"email\": \"moe@example.com\",\n  \"password\": \"strongpassword123\"\n}", "options": { "raw": { "language": "json" } } }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
-                  "pm.test(\"Has error\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.error).to.equal(\"email already registered\");",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 409\", () => pm.response.to.have.status(409));", "pm.test(\"Has error\", () => { const body = pm.response.json(); pm.expect(body.error).to.equal(\"email already registered\"); });"] } }]
         },
         {
           "name": "Register - duplicate username",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "register"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"moeidheidari\",\n  \"email\": \"other@example.com\",\n  \"password\": \"strongpassword123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"moeidheidari\",\n  \"email\": \"other@example.com\",\n  \"password\": \"strongpassword123\"\n}", "options": { "raw": { "language": "json" } } }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
-                  "pm.test(\"Has error\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.error).to.equal(\"username already taken\");",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 409\", () => pm.response.to.have.status(409));", "pm.test(\"Has error\", () => { const body = pm.response.json(); pm.expect(body.error).to.equal(\"username already taken\"); });"] } }]
         },
         {
           "name": "Register - invalid body",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "register"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "not-json",
-              "options": {
-                "raw": {
-                  "language": "text"
-                }
-              }
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
+            "body": { "mode": "raw", "raw": "not-json", "options": { "raw": { "language": "text" } } }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
-                  "pm.test(\"Has error\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.error).to.equal(\"invalid request body\");",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 400\", () => pm.response.to.have.status(400));", "pm.test(\"Has error\", () => { const body = pm.response.json(); pm.expect(body.error).to.equal(\"invalid request body\"); });"] } }]
         },
         {
           "name": "Verify Email",
           "request": {
             "method": "GET",
-            "url": {
-              "raw": "{{base_url}}/auth/verify-email?token={{verification_token}}",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "verify-email"],
-              "query": [
-                {
-                  "key": "token",
-                  "value": "{{verification_token}}"
-                }
-              ]
-            }
+            "url": { "raw": "{{base_url}}/auth/verify-email?token={{verification_token}}", "host": ["{{base_url}}"], "path": ["auth", "verify-email"], "query": [{ "key": "token", "value": "{{verification_token}}" }] }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"Has token and account\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.token).to.be.a(\"string\");",
-                  "  pm.expect(body.account).to.be.an(\"object\");",
-                  "  pm.collectionVariables.set(\"token\", body.token);",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 200\", () => pm.response.to.have.status(200));", "pm.test(\"Has token and account\", () => { const body = pm.response.json(); pm.expect(body.token).to.be.a(\"string\"); pm.expect(body.account).to.be.an(\"object\"); pm.collectionVariables.set(\"token\", body.token); });"] } }]
         },
         {
           "name": "Verify Email - missing token",
           "request": {
             "method": "GET",
-            "url": {
-              "raw": "{{base_url}}/auth/verify-email",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "verify-email"]
-            }
+            "url": { "raw": "{{base_url}}/auth/verify-email", "host": ["{{base_url}}"], "path": ["auth", "verify-email"] }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
-                  "pm.test(\"Has error\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.error).to.equal(\"token is required\");",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 400\", () => pm.response.to.have.status(400));", "pm.test(\"Has error\", () => { const body = pm.response.json(); pm.expect(body.error).to.equal(\"token is required\"); });"] } }]
         },
         {
           "name": "Verify Email - invalid token",
           "request": {
             "method": "GET",
-            "url": {
-              "raw": "{{base_url}}/auth/verify-email?token=completely-wrong-token",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "verify-email"],
-              "query": [
-                {
-                  "key": "token",
-                  "value": "completely-wrong-token"
-                }
-              ]
-            }
+            "url": { "raw": "{{base_url}}/auth/verify-email?token=completely-wrong-token", "host": ["{{base_url}}"], "path": ["auth", "verify-email"], "query": [{ "key": "token", "value": "completely-wrong-token" }] }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
-                  "pm.test(\"Has error\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.error).to.equal(\"token invalid or expired\");",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 422\", () => pm.response.to.have.status(422));", "pm.test(\"Has error\", () => { const body = pm.response.json(); pm.expect(body.error).to.equal(\"token invalid or expired\"); });"] } }]
         },
         {
           "name": "Login",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"moe@example.com\",\n  \"password\": \"strongpassword123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"moe@example.com\",\n  \"password\": \"strongpassword123\"\n}", "options": { "raw": { "language": "json" } } }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"Has token and account\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.token).to.be.a(\"string\");",
-                  "  pm.expect(body.account).to.be.an(\"object\");",
-                  "  pm.collectionVariables.set(\"token\", body.token);",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 200\", () => pm.response.to.have.status(200));", "pm.test(\"Has token and account\", () => { const body = pm.response.json(); pm.expect(body.token).to.be.a(\"string\"); pm.expect(body.account).to.be.an(\"object\"); pm.collectionVariables.set(\"token\", body.token); });"] } }]
         },
         {
           "name": "Login - wrong password",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"moe@example.com\",\n  \"password\": \"wrongpassword\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"moe@example.com\",\n  \"password\": \"wrongpassword\"\n}", "options": { "raw": { "language": "json" } } }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
-                  "pm.test(\"Has error\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.error).to.equal(\"invalid credentials\");",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 401\", () => pm.response.to.have.status(401));", "pm.test(\"Has error\", () => { const body = pm.response.json(); pm.expect(body.error).to.equal(\"invalid credentials\"); });"] } }]
         },
         {
           "name": "Login - unverified account",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"unverified@example.com\",\n  \"password\": \"strongpassword123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"unverified@example.com\",\n  \"password\": \"strongpassword123\"\n}", "options": { "raw": { "language": "json" } } }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
-                  "pm.test(\"Has error\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.error).to.equal(\"email not verified\");",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 403\", () => pm.response.to.have.status(403));", "pm.test(\"Has error\", () => { const body = pm.response.json(); pm.expect(body.error).to.equal(\"email not verified\"); });"] } }]
         },
         {
           "name": "Login - unknown email",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"nobody@example.com\",\n  \"password\": \"whatever\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"nobody@example.com\",\n  \"password\": \"whatever\"\n}", "options": { "raw": { "language": "json" } } }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
-                  "pm.test(\"Same error as wrong password\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.error).to.equal(\"invalid credentials\");",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 401\", () => pm.response.to.have.status(401));", "pm.test(\"Same error as wrong password\", () => { const body = pm.response.json(); pm.expect(body.error).to.equal(\"invalid credentials\"); });"] } }]
         },
         {
           "name": "Login - invalid body",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "not-json",
-              "options": {
-                "raw": {
-                  "language": "text"
-                }
-              }
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+            "body": { "mode": "raw", "raw": "not-json", "options": { "raw": { "language": "text" } } }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
-                  "pm.test(\"Has error\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.error).to.equal(\"invalid request body\");",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 400\", () => pm.response.to.have.status(400));", "pm.test(\"Has error\", () => { const body = pm.response.json(); pm.expect(body.error).to.equal(\"invalid request body\"); });"] } }]
         },
         {
-    "name": "Me",
-    "request": {
-        "method": "GET",
-        "header": [
-            {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-            }
-        ],
-        "url": {
-            "raw": "{{base_url}}/me",
-            "host": ["{{base_url}}"],
-            "path": ["me"]
-        }
-    },
-    "event": [
-        {
-            "listen": "test",
-            "script": {
-                "exec": [
-                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-                    "pm.test(\"Has account_id\", () => {",
-                    "  const body = pm.response.json();",
-                    "  pm.expect(body.account_id).to.be.a(\"string\");",
-                    "  pm.expect(body.provider).to.be.a(\"string\");",
-                    "});"
-                ]
-            }
-        }
-    ]
-},
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 200\", () => pm.response.to.have.status(200));", "pm.test(\"Has account_id\", () => { const body = pm.response.json(); pm.expect(body.account_id).to.be.a(\"string\"); pm.expect(body.provider).to.be.a(\"string\"); });"] } }]
+        },
         {
           "name": "OAuth - GitHub Redirect",
           "request": {
             "method": "GET",
-            "url": {
-              "raw": "{{base_url}}/auth/github/redirect",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "github", "redirect"]
-            }
+            "url": { "raw": "{{base_url}}/auth/github/redirect", "host": ["{{base_url}}"], "path": ["auth", "github", "redirect"] }
           },
           "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "pm.request.disableFollowRedirects = true;"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 307\", () => pm.response.to.have.status(307));",
-                  "pm.test(\"Has Location header pointing to GitHub\", () => {",
-                  "  const location = pm.response.headers.get(\"Location\");",
-                  "  pm.expect(location).to.include(\"github.com/login/oauth/authorize\");",
-                  "  pm.expect(location).to.include(\"state=\");",
-                  "});",
-                  "pm.test(\"Has oauth_state cookie\", () => {",
-                  "  const cookie = pm.cookies.get(\"oauth_state\");",
-                  "  pm.expect(cookie).to.not.be.undefined;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "OAuth - GitHub Redirect (open in browser)",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{base_url}}/auth/github/redirect",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "github", "redirect"]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Redirected to GitHub\", () => {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 307]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  const body = pm.response.json();",
-                  "  if (body.token) {",
-                  "    pm.collectionVariables.set(\"token\", body.token);",
-                  "  }",
-                  "}"
-                ]
-              }
-            }
+            { "listen": "prerequest", "script": { "exec": ["pm.request.disableFollowRedirects = true;"] } },
+            { "listen": "test", "script": { "exec": ["pm.test(\"Status is 307\", () => pm.response.to.have.status(307));", "pm.test(\"Has Location header pointing to GitHub\", () => { const location = pm.response.headers.get(\"Location\"); pm.expect(location).to.include(\"github.com/login/oauth/authorize\"); pm.expect(location).to.include(\"state=\"); });"] } }
           ]
         },
         {
           "name": "OAuth - GitHub Callback",
           "request": {
             "method": "GET",
-            "url": {
-              "raw": "{{base_url}}/auth/github/callback?code={{github_code}}&state={{oauth_state}}",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "github", "callback"],
-              "query": [
-                {
-                  "key": "code",
-                  "value": "{{github_code}}"
-                },
-                {
-                  "key": "state",
-                  "value": "{{oauth_state}}"
-                }
-              ]
-            }
+            "url": { "raw": "{{base_url}}/auth/github/callback?code={{github_code}}&state={{oauth_state}}", "host": ["{{base_url}}"], "path": ["auth", "github", "callback"], "query": [{ "key": "code", "value": "{{github_code}}" }, { "key": "state", "value": "{{oauth_state}}" }] }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"Has token and account\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.token).to.be.a(\"string\");",
-                  "  pm.expect(body.account).to.be.an(\"object\");",
-                  "  pm.expect(body.account.provider).to.equal(\"github\");",
-                  "  pm.collectionVariables.set(\"token\", body.token);",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 200\", () => pm.response.to.have.status(200));", "pm.test(\"Has token and account\", () => { const body = pm.response.json(); pm.expect(body.token).to.be.a(\"string\"); pm.expect(body.account).to.be.an(\"object\"); pm.expect(body.account.provider).to.equal(\"github\"); pm.collectionVariables.set(\"token\", body.token); });"] } }]
         },
         {
           "name": "OAuth - Unknown Provider",
           "request": {
             "method": "GET",
-            "url": {
-              "raw": "{{base_url}}/auth/unknown/redirect",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "unknown", "redirect"]
-            }
+            "url": { "raw": "{{base_url}}/auth/unknown/redirect", "host": ["{{base_url}}"], "path": ["auth", "unknown", "redirect"] }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
-                  "pm.test(\"Has error\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.error).to.equal(\"oauth provider not configured\");",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 400\", () => pm.response.to.have.status(400));", "pm.test(\"Has error\", () => { const body = pm.response.json(); pm.expect(body.error).to.equal(\"oauth provider not configured\"); });"] } }]
         },
         {
           "name": "OAuth - Callback missing code",
           "request": {
             "method": "GET",
-            "url": {
-              "raw": "{{base_url}}/auth/github/callback?state=some-state",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "github", "callback"],
-              "query": [
-                {
-                  "key": "state",
-                  "value": "some-state"
-                }
-              ]
-            }
+            "url": { "raw": "{{base_url}}/auth/github/callback?state=some-state", "host": ["{{base_url}}"], "path": ["auth", "github", "callback"], "query": [{ "key": "state", "value": "some-state" }] }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
-                  "pm.test(\"Has error\", () => {",
-                  "  const body = pm.response.json();",
-                  "  pm.expect(body.error).to.be.oneOf([\"missing oauth code\", \"invalid oauth state\"]);",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 400\", () => pm.response.to.have.status(400));", "pm.test(\"Has error\", () => { const body = pm.response.json(); pm.expect(body.error).to.be.oneOf([\"missing oauth code\", \"invalid oauth state\"]); });"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Badges",
+      "item": [
+        {
+          "name": "List Badges",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/badges", "host": ["{{base_url}}"], "path": ["badges"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 200\", () => pm.response.to.have.status(200));", "pm.test(\"Returns array\", () => { const body = pm.response.json(); pm.expect(body).to.be.an(\"array\"); });"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Plates",
+      "item": [
+        {
+          "name": "List Plates",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates", "host": ["{{base_url}}"], "path": ["plates"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 200\", () => pm.response.to.have.status(200));", "pm.test(\"Has data and total\", () => { const body = pm.response.json(); pm.expect(body.data).to.be.an(\"array\"); pm.expect(body.total).to.be.a(\"number\"); });"] } }]
+        },
+        {
+          "name": "List Plates - filter by category",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates?category=backend", "host": ["{{base_url}}"], "path": ["plates"], "query": [{ "key": "category", "value": "backend" }] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 200\", () => pm.response.to.have.status(200));", "pm.test(\"Has data array\", () => { const body = pm.response.json(); pm.expect(body.data).to.be.an(\"array\"); });"] } }]
+        },
+        {
+          "name": "List Plates - filter by tag",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates?tag=go", "host": ["{{base_url}}"], "path": ["plates"], "query": [{ "key": "tag", "value": "go" }] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 200\", () => pm.response.to.have.status(200));", "pm.test(\"Has data array\", () => { const body = pm.response.json(); pm.expect(body.data).to.be.an(\"array\"); });"] } }]
+        },
+        {
+          "name": "List Plates - search",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates?search=microservice", "host": ["{{base_url}}"], "path": ["plates"], "query": [{ "key": "search", "value": "microservice" }] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 200\", () => pm.response.to.have.status(200));", "pm.test(\"Has data array\", () => { const body = pm.response.json(); pm.expect(body.data).to.be.an(\"array\"); });"] } }]
+        },
+        {
+          "name": "Submit Repository Plate",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/repository", "host": ["{{base_url}}"], "path": ["plates", "repository"] },
+            "body": { "mode": "raw", "raw": "{\n  \"repo_url\": \"https://github.com/MoeidHeidari/dummy-boilerplate\",\n  \"branch\": \"main\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 201\", () => pm.response.to.have.status(201));", "pm.test(\"Has plate with id and slug\", () => { const body = pm.response.json(); pm.expect(body.id).to.be.a(\"string\"); pm.expect(body.slug).to.be.a(\"string\"); pm.expect(body.type).to.equal(\"repository\"); pm.expect(body.is_verified).to.equal(true); pm.collectionVariables.set(\"plate_id\", body.id); pm.collectionVariables.set(\"plate_slug\", body.slug); });"] } }]
+        },
+        {
+          "name": "Submit Repository Plate - owner mismatch",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/repository", "host": ["{{base_url}}"], "path": ["plates", "repository"] },
+            "body": { "mode": "raw", "raw": "{\n  \"repo_url\": \"https://github.com/someone-else/their-repo\",\n  \"branch\": \"main\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 422\", () => pm.response.to.have.status(422));", "pm.test(\"Has owner mismatch error\", () => { const body = pm.response.json(); pm.expect(body.error).to.equal(\"owner field does not match your username\"); });"] } }]
+        },
+        {
+          "name": "Submit Repository Plate - unauthenticated",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/plates/repository", "host": ["{{base_url}}"], "path": ["plates", "repository"] },
+            "body": { "mode": "raw", "raw": "{\n  \"repo_url\": \"https://github.com/MoeidHeidari/dummy-boilerplate\",\n  \"branch\": \"main\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 401\", () => pm.response.to.have.status(401));"] } }]
+        },
+        {
+          "name": "Submit File Plate",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/file", "host": ["{{base_url}}"], "path": ["plates", "file"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Go Dockerfile\",\n  \"description\": \"Production-ready Dockerfile for Go services\",\n  \"category\": \"devops\",\n  \"visibility\": \"public\",\n  \"filename\": \"Dockerfile\",\n  \"content\": \"FROM golang:1.22-alpine AS builder\\nWORKDIR /app\\nCOPY . .\\nRUN go build -o main .\\n\\nFROM alpine:latest\\nCOPY --from=builder /app/main .\\nENTRYPOINT [\\\"/main\\\"]\",\n  \"tags\": [\"go\", \"docker\", \"devops\"]\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 201\", () => pm.response.to.have.status(201));", "pm.test(\"Has plate with correct fields\", () => { const body = pm.response.json(); pm.expect(body.id).to.be.a(\"string\"); pm.expect(body.type).to.equal(\"file\"); pm.expect(body.is_verified).to.equal(true); pm.expect(body.filename).to.equal(\"Dockerfile\"); pm.collectionVariables.set(\"plate_id\", body.id); pm.collectionVariables.set(\"plate_slug\", body.slug); });"] } }]
+        },
+        {
+          "name": "Submit File Plate - invalid body",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/file", "host": ["{{base_url}}"], "path": ["plates", "file"] },
+            "body": { "mode": "raw", "raw": "not-json", "options": { "raw": { "language": "text" } } }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 400\", () => pm.response.to.have.status(400));"] } }]
+        },
+        {
+          "name": "Get Plate by Slug",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/{{plate_slug}}", "host": ["{{base_url}}"], "path": ["plates", "{{plate_slug}}"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 200\", () => pm.response.to.have.status(200));", "pm.test(\"Has correct plate\", () => { const body = pm.response.json(); pm.expect(body.id).to.be.a(\"string\"); pm.expect(body.slug).to.equal(pm.collectionVariables.get(\"plate_slug\")); });"] } }]
+        },
+        {
+          "name": "Get Plate by Slug - not found",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/does-not-exist", "host": ["{{base_url}}"], "path": ["plates", "does-not-exist"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 404\", () => pm.response.to.have.status(404));", "pm.test(\"Has error\", () => { const body = pm.response.json(); pm.expect(body.error).to.equal(\"not found\"); });"] } }]
+        },
+        {
+          "name": "Update Plate",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/{{plate_id}}", "host": ["{{base_url}}"], "path": ["plates", "{{plate_id}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"description\": \"Updated description\",\n  \"visibility\": \"public\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 200\", () => pm.response.to.have.status(200));", "pm.test(\"Description updated\", () => { const body = pm.response.json(); pm.expect(body.description).to.equal(\"Updated description\"); });"] } }]
+        },
+        {
+          "name": "Update Plate - forbidden",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/00000000-0000-0000-0000-000000000000", "host": ["{{base_url}}"], "path": ["plates", "00000000-0000-0000-0000-000000000000"] },
+            "body": { "mode": "raw", "raw": "{\n  \"description\": \"Should not work\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 404 or 403\", () => { pm.expect(pm.response.code).to.be.oneOf([403, 404]); });"] } }]
+        },
+        {
+          "name": "Replace Tags",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/{{plate_id}}/tags", "host": ["{{base_url}}"], "path": ["plates", "{{plate_id}}", "tags"] },
+            "body": { "mode": "raw", "raw": "{\n  \"tags\": [\"go\", \"grpc\", \"docker\", \"backend\"]\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"] } }]
+        },
+        {
+          "name": "Replace Tags - clear all",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/{{plate_id}}/tags", "host": ["{{base_url}}"], "path": ["plates", "{{plate_id}}", "tags"] },
+            "body": { "mode": "raw", "raw": "{\n  \"tags\": []\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"] } }]
+        },
+        {
+          "name": "Record Use",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/{{plate_id}}/use", "host": ["{{base_url}}"], "path": ["plates", "{{plate_id}}", "use"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"] } }]
+        },
+        {
+          "name": "Record Use - unauthenticated",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/plates/{{plate_id}}/use", "host": ["{{base_url}}"], "path": ["plates", "{{plate_id}}", "use"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 401\", () => pm.response.to.have.status(401));"] } }]
+        },
+        {
+          "name": "Approve Plate",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/{{plate_id}}/approve", "host": ["{{base_url}}"], "path": ["plates", "{{plate_id}}", "approve"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"] } }]
+        },
+        {
+          "name": "Reject Plate",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/{{plate_id}}/reject", "host": ["{{base_url}}"], "path": ["plates", "{{plate_id}}", "reject"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"] } }]
+        },
+        {
+          "name": "Grant Badge",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/{{plate_id}}/badges", "host": ["{{base_url}}"], "path": ["plates", "{{plate_id}}", "badges"] },
+            "body": { "mode": "raw", "raw": "{\n  \"badge_slug\": \"featured\",\n  \"reason\": \"Excellent quality template\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"] } }]
+        },
+        {
+          "name": "Grant Badge - badge not found",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/{{plate_id}}/badges", "host": ["{{base_url}}"], "path": ["plates", "{{plate_id}}", "badges"] },
+            "body": { "mode": "raw", "raw": "{\n  \"badge_slug\": \"nonexistent-badge\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 404\", () => pm.response.to.have.status(404));", "pm.test(\"Has error\", () => { const body = pm.response.json(); pm.expect(body.error).to.equal(\"not found\"); });"] } }]
+        },
+        {
+          "name": "Revoke Badge",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/{{plate_id}}/badges/featured", "host": ["{{base_url}}"], "path": ["plates", "{{plate_id}}", "badges", "featured"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"] } }]
+        },
+        {
+          "name": "Archive Plate",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/{{plate_id}}", "host": ["{{base_url}}"], "path": ["plates", "{{plate_id}}"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"] } }]
+        },
+        {
+          "name": "Archive Plate - forbidden",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/plates/00000000-0000-0000-0000-000000000000", "host": ["{{base_url}}"], "path": ["plates", "00000000-0000-0000-0000-000000000000"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Status is 404 or 403\", () => { pm.expect(pm.response.code).to.be.oneOf([403, 404]); });"] } }]
         }
       ]
     }
