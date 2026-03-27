@@ -27,6 +27,9 @@ func (r *plateRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.Pla
 	result := r.db.WithContext(ctx).
 		Preload("Tags").
 		Preload("Badges.Badge").
+		Preload("Organization").
+		Preload("Organization.Owner").
+		Preload("Owner").
 		First(plate, "id = ?", id)
 	if result.Error == gorm.ErrRecordNotFound {
 		return nil, nil
@@ -39,6 +42,9 @@ func (r *plateRepository) GetBySlug(ctx context.Context, slug string) (*model.Pl
 	result := r.db.WithContext(ctx).
 		Preload("Tags").
 		Preload("Badges.Badge").
+		Preload("Organization").
+		Preload("Organization.Owner").
+		Preload("Owner").
 		Where("slug = ?", slug).
 		First(plate)
 	if result.Error == gorm.ErrRecordNotFound {
@@ -53,23 +59,26 @@ func (r *plateRepository) List(ctx context.Context, filter repository.PlateFilte
 
 	q := r.db.WithContext(ctx).Model(&model.Plate{})
 
-	if filter.Type != nil {
-		q = q.Where("type = ?", *filter.Type)
+	if len(filter.Types) > 0 {
+		q = q.Where("type IN ?", filter.Types)
 	}
-	if filter.Status != nil {
-		q = q.Where("status = ?", *filter.Status)
-	}
-	if filter.Visibility != nil {
-		q = q.Where("visibility = ?", *filter.Visibility)
-	}
-	if filter.Category != "" {
-		q = q.Where("category = ?", filter.Category)
+	if len(filter.Categories) > 0 {
+		q = q.Where("category IN ?", filter.Categories)
 	}
 	if filter.OwnerID != nil {
 		q = q.Where("owner_id = ?", *filter.OwnerID)
 	}
 	if filter.Search != "" {
-		q = q.Where("search_vector @@ plainto_tsquery('english', ?)", filter.Search)
+		q = q.Where(
+			`search_vector @@ websearch_to_tsquery('english', ?)
+			 OR name ILIKE ?
+			 OR description ILIKE ?
+			 OR plate.id IN (SELECT plate_id FROM plate_tag WHERE tag ILIKE ?)`,
+			filter.Search,
+			"%"+filter.Search+"%",
+			"%"+filter.Search+"%",
+			"%"+filter.Search+"%",
+		)
 	}
 	if len(filter.Tags) > 0 {
 		q = q.Joins("JOIN plate_tag ON plate_tag.plate_id = plate.id").
@@ -88,12 +97,26 @@ func (r *plateRepository) List(ctx context.Context, filter repository.PlateFilte
 		limit = 20
 	}
 
-	result := q.
-		Preload("Tags").
-		Offset((page - 1) * limit).
-		Limit(limit).
-		Order("created_at DESC").
-		Find(&plates)
+	var result *gorm.DB
+	if filter.Search != "" {
+		result = q.
+			Preload("Tags").
+			Preload("Organization").
+			Preload("Organization.Owner").
+			Offset((page - 1) * limit).
+			Limit(limit).
+			Order(gorm.Expr("ts_rank_cd(search_vector, websearch_to_tsquery('english', ?)) DESC, bookmark_count DESC, created_at DESC", filter.Search)).
+			Find(&plates)
+	} else {
+		result = q.
+			Preload("Tags").
+			Preload("Organization").
+			Preload("Organization.Owner").
+			Offset((page - 1) * limit).
+			Limit(limit).
+			Order("bookmark_count DESC, created_at DESC").
+			Find(&plates)
+	}
 
 	return plates, int(total), result.Error
 }
@@ -106,11 +129,18 @@ func (r *plateRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(&model.Plate{}, "id = ?", id).Error
 }
 
-func (r *plateRepository) IncrementUseCount(ctx context.Context, id uuid.UUID) error {
+func (r *plateRepository) IncrementBookmarkCount(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).
 		Model(&model.Plate{}).
 		Where("id = ?", id).
-		UpdateColumn("use_count", gorm.Expr("use_count + 1")).Error
+		UpdateColumn("bookmark_count", gorm.Expr("bookmark_count + 1")).Error
+}
+
+func (r *plateRepository) DecrementBookmarkCount(ctx context.Context, id uuid.UUID) error {
+	return r.db.WithContext(ctx).
+		Model(&model.Plate{}).
+		Where("id = ?", id).
+		UpdateColumn("bookmark_count", gorm.Expr("bookmark_count - 1")).Error
 }
 
 func (r *plateRepository) UpdateSyncState(ctx context.Context, id uuid.UUID, state repository.PlateSyncState) error {
@@ -147,16 +177,43 @@ func (r *plateRepository) GetStats(ctx context.Context) (*repository.PlateStats,
 
 	r.db.WithContext(ctx).Model(&model.Plate{}).
 		Where("status = ?", model.PlateStatusApproved).
-		Select("coalesce(sum(use_count), 0)").
-		Scan(&stats.TotalUses)
+		Select("coalesce(sum(bookmark_count), 0)").
+		Scan(&stats.TotalBookmarks)
 
 	return &stats, nil
+}
+
+func (r *plateRepository) GetFilterOptions(ctx context.Context) (*repository.PlateFilterOptions, error) {
+	var categories []string
+	if err := r.db.WithContext(ctx).
+		Model(&model.Plate{}).
+		Distinct("category").
+		Order("category ASC").
+		Where("category <> ''").
+		Pluck("category", &categories).Error; err != nil {
+		return nil, err
+	}
+
+	var tags []string
+	if err := r.db.WithContext(ctx).
+		Model(&model.PlateTag{}).
+		Distinct("tag").
+		Order("tag ASC").
+		Where("tag <> ''").
+		Pluck("tag", &tags).Error; err != nil {
+		return nil, err
+	}
+
+	return &repository.PlateFilterOptions{
+		Categories: categories,
+		Tags:       tags,
+	}, nil
 }
 
 func (r *plateRepository) ListDueForSync(ctx context.Context, limit int) ([]*model.Plate, error) {
 	var plates []*model.Plate
 	result := r.db.WithContext(ctx).
-		Where("type = ? AND next_sync_at <= NOW() AND sync_status != ?",
+		Where("type = ? AND (next_sync_at <= NOW() OR (sync_status = ? AND updated_at <= NOW() - INTERVAL '2 minutes'))",
 			model.PlateTypeRepository, model.SyncStatusSyncing).
 		Order("next_sync_at ASC").
 		Limit(limit).

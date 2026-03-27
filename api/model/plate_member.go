@@ -14,12 +14,13 @@ const (
 )
 
 type PlateMember struct {
-	ID         uuid.UUID       `gorm:"type:uuid;primaryKey"              json:"id"`
-	PlateID    uuid.UUID       `gorm:"type:uuid;not null;index"          json:"plate_id"`
-	AccountID  uuid.UUID       `gorm:"type:uuid;not null;index"          json:"account_id"`
-	Role       PlateMemberRole `gorm:"type:varchar(20);not null"         json:"role"`
-	JoinedAt   time.Time       `gorm:"autoCreateTime"                    json:"joined_at"`
-	LastUsedAt *time.Time      `                                         json:"last_used_at,omitempty"`
+	ID           uuid.UUID       `gorm:"type:uuid;primaryKey"              json:"id"`
+	PlateID      uuid.UUID       `gorm:"type:uuid;not null;index"          json:"plate_id"`
+	AccountID    uuid.UUID       `gorm:"type:uuid;not null;index"          json:"account_id"`
+	Role         PlateMemberRole `gorm:"type:varchar(20);not null"         json:"role"`
+	IsBookmarked bool            `gorm:"default:false"                     json:"is_bookmarked"`
+	BookmarkedAt *time.Time      `                                          json:"bookmarked_at,omitempty"`
+	JoinedAt     time.Time       `gorm:"autoCreateTime"                    json:"joined_at"`
 
 	Plate   *Plate   `gorm:"foreignKey:PlateID"   json:"-"`
 	Account *Account `gorm:"foreignKey:AccountID" json:"-"`

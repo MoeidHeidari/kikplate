@@ -12,4 +12,5 @@ var (
 	ErrUnauthorized     = errors.New("unauthorized")
 	ErrProviderNotFound = errors.New("oauth provider not configured")
 	ErrOAuthFailed      = errors.New("oauth authentication failed")
+	ErrInvalidUsername  = errors.New("username cannot be empty")
 )

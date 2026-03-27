@@ -28,12 +28,12 @@ function CopyField({ label, icon, value }: { label: string; icon: React.ReactNod
         <span>{label}</span>
       </div>
       <div className="flex items-center gap-0 border border-border">
-        <code className="flex-1 px-3 py-2.5 text-xs font-mono text-foreground bg-muted/30 truncate">
+        <code className="flex-1 truncate bg-muted/20 px-3 py-2.5 text-xs font-mono text-foreground">
           {value}
         </code>
         <button
           onClick={handleCopy}
-          className="px-3 py-2.5 border-l border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+          className="border-l border-border px-3 py-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           {copied
             ? <Check className="h-3.5 w-3.5 text-green-500" />
@@ -50,15 +50,12 @@ export function UseModal({ open, onClose, repoUrl, slug }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* backdrop */}
       <div
         className="absolute inset-0 bg-black/50"
         onClick={onClose}
       />
 
-      {/* modal */}
-      <div className="relative w-full max-w-md bg-background border border-border shadow-xl">
-        {/* header */}
+      <div className="relative w-full max-w-md border border-border bg-background shadow-none">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h2 className="text-sm font-semibold">Use this plate</h2>
           <button
@@ -69,7 +66,6 @@ export function UseModal({ open, onClose, repoUrl, slug }: Props) {
           </button>
         </div>
 
-        {/* content */}
         <div className="px-5 py-5 space-y-5">
           <p className="text-xs text-muted-foreground">
             Choose how you want to use this template:

@@ -1,4 +1,5 @@
 
+# PostgreSQL connection used by the API service.
 database:
   host: localhost
   port: 5432
@@ -6,11 +7,26 @@ database:
   username: postgres
   password: password
 
+# HTTP server settings for the Go API.
 server:
+  # Port the API listens on.
   port: 3001
+  # Public URL of the frontend app. Used in redirects and auth flows.
+  frontend_url: http://localhost:3000
   log:
+    # Supported values depend on the logger setup. `info` is the safe default.
     level: info
 
+# Repository sync worker settings.
+sync:
+  # How often a full sync cycle should run.
+  interval: 6h
+  # Delay between polling attempts while processing sync work.
+  poll_interval: 30s
+  # Number of items handled in each sync batch.
+  batch_size: 25
+
+# OAuth / SSO providers exposed by the API.
 sso:
   providers:
     - name: github
@@ -28,3 +44,36 @@ sso:
         - openid
         - email
         - profile
+
+# Frontend-only branding and hero configuration exposed through GET /config.
+customization:
+  # Logo URL used in the navbar.
+  # Local example: a file from web/public.
+  # Kubernetes example: a CDN/object-storage URL managed via ConfigMap.
+  logo: "/kikplate-logo-on-dark.svg"
+
+  # Main hero title on the landing page.
+  # Use \n to force a line break.
+  banner_title: "The biggest library of\nstarter boilerplates"
+
+  # Social links shown in the hero section.
+  social_media:
+    - type: github
+      link: "https://github.com/kickplate"
+    - type: slack
+      link: "https://your-workspace.slack.com"
+    - type: linkedin
+      link: "https://www.linkedin.com/company/your-company"
+    - type: x
+      link: "https://x.com/your-handle"
+
+  # Clickable suggested searches shown below the hero search box.
+  prepared_queries:
+    - "Golang starter"
+    - "Clean architecture boilerplate for Nodejs"
+    - "Go Chi REST"
+    - "Python http server"
+    - "Next.js"
+    - "Gin framework"
+    - "Postgresql docker-compose"
+    - "Nginx"

@@ -1,18 +1,19 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
 import { useMe, useLogout } from "@/src/presentation/hooks/useAuth"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useConfig } from "@/src/presentation/hooks/useConfig"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { NavbarSearch } from "./NavbarSearch"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LogOut, User, UserPlus, Sun, Moon, Github, BookOpen } from "lucide-react"
+import { LogOut, User, UserPlus, Sun, Moon, Github } from "lucide-react"
 import { useTheme } from "next-themes"
 
 const SlackIcon = () => (
@@ -23,14 +24,22 @@ const SlackIcon = () => (
 
 export function Navbar() {
   const { data: me } = useMe()
+  const { data: appConfig } = useConfig()
   const logout = useLogout()
   const router = useRouter()
   const { theme, setTheme } = useTheme()
+  const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (mounted && me && !me.username && !window.location.pathname.startsWith("/set-username")) {
+      router.push("/set-username")
+    }
+  }, [mounted, me])
 
   const initials = me?.username
     ? me.username.slice(0, 2).toUpperCase()
@@ -61,25 +70,27 @@ export function Navbar() {
 
   return (
     <nav className="dark sticky top-0 z-50 bg-background">
-      <div className="container mx-auto flex h-20 items-center justify-between px-4">
+      <div className="container mx-auto flex h-20 items-center px-4 gap-4">
+        <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => router.push("/")}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={appConfig?.logo ?? "/kikplate-logo-on-dark.svg"}
+            alt="logo"
+            width={40}
+            height={14}
+          />
+          <span className="text-xl tracking-tight text-white hidden sm:inline">
+            Kik<span className="font-bold">Plate</span>
+          </span>
+        </div>
 
-        {/* left */}
-        <div className="flex items-center gap-6">
-          <div
-            onClick={() => router.push("/")}
-            className="flex items-center gap-2 cursor-pointer"
-          >
-            <Image
-              src="/kikplate-logo-on-dark.svg"
-              alt="Kickplate logo"
-              width={40}
-              height={14}
-              priority
-            />
-            <span className="text-xl tracking-tight text-white">
-              Kik<span className="font-bold">Plate</span>
-            </span>
+        {pathname !== "/" && !pathname?.startsWith("/explore") && (
+          <div className="hidden md:flex">
+            <NavbarSearch />
           </div>
+        )}
+
+        <div className="flex items-center gap-4 shrink-0 ml-auto">
           <div className="hidden sm:flex items-center gap-4 text-sm text-white/60">
             <Link href="/explore" className="hover:text-white transition-colors">
               Explore
@@ -90,26 +101,12 @@ export function Navbar() {
               </Link>
             )}
           </div>
-        </div>
 
-        {/* right */}
-        <div className="flex items-center gap-4">
-
-          {/* icon links */}
-          <div className="hidden sm:flex items-center gap-3 text-white/40">
-            
-            <Link
-              href="#"
-              className="hover:text-white transition-colors"
-              title="Docs"
-            >
+          <div className="hidden md:flex items-center gap-3 text-white/40 px-3">
+            <Link href="#" className="hover:text-white transition-colors" title="Docs">
               docs
             </Link>
-            <Link
-              href="#"
-              className="hover:text-white transition-colors"
-              title="Docs"
-            >
+            <Link href="/stats" className="hover:text-white transition-colors" title="Stats">
               stats
             </Link>
             <Link
@@ -120,22 +117,18 @@ export function Navbar() {
             >
               <Github className="h-4 w-4" />
             </Link>
-            <Link
-              href="#"
-              className="hover:text-white transition-colors"
-              title="Slack"
-            >
+            <Link href="#" className="hover:text-white transition-colors" title="Slack">
               <SlackIcon />
             </Link>
           </div>
 
           <div className="hidden sm:block h-4 w-px bg-white/10" />
 
-          {/* avatar dropdown */}
           {me ? (
             <DropdownMenu>
-             <DropdownMenuTrigger className="outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 ring-offset-background">
+              <DropdownMenuTrigger className="outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 ring-offset-background">
                 <Avatar className="h-8 w-8 cursor-pointer rounded-sm">
+                  {me.avatar_url && <AvatarImage src={me.avatar_url} alt={me.username ?? me.display_name ?? "avatar"} />}
                   <AvatarFallback className="text-xs bg-white/20 text-white rounded-sm font-semibold">
                     {initials}
                   </AvatarFallback>
@@ -179,7 +172,7 @@ export function Navbar() {
             <DropdownMenu>
               <DropdownMenuTrigger className="outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 ring-offset-[#1a1f2e]">
                 <Avatar className="h-8 w-8 cursor-pointer rounded-sm">
-                  <AvatarFallback className="text-xs bg-mutedtext-white/60 rounded-sm">
+                  <AvatarFallback className="text-xs bg-muted text-white/60 rounded-sm">
                     ?
                   </AvatarFallback>
                 </Avatar>

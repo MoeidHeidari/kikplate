@@ -33,6 +33,14 @@ export function formatCount(n: number): string {
   return String(n)
 }
 
+export function buildPlateHref(slug: string): string {
+  const encodedSlug = slug
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/")
+  return `/plates/${encodedSlug}`
+}
+
 export function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const m = Math.floor(diff / 60_000)

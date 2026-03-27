@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
@@ -17,19 +18,35 @@ type OAuthProvider struct {
 	Scopes       []string `mapstructure:"scopes"`
 }
 
+type SocialMediaLink struct {
+	Type string `mapstructure:"type" json:"type"`
+	Link string `mapstructure:"link" json:"link"`
+}
+
+type Customization struct {
+	Logo            string            `mapstructure:"logo" json:"logo"`
+	BannerTitle     string            `mapstructure:"banner_title" json:"banner_title"`
+	SocialMedia     []SocialMediaLink `mapstructure:"social_media" json:"social_media"`
+	PreparedQueries []string          `mapstructure:"prepared_queries" json:"prepared_queries"`
+}
+
 type Env struct {
-	ServerPort     string `mapstructure:"SERVER_PORT"`
-	LogLevel       string `mapstructure:"SERVER_LOG_LEVEL"`
-	Environment    string `mapstructure:"ENV"`
-	DBUsername     string `mapstructure:"DB_USER"`
-	DBPassword     string `mapstructure:"DB_PASS"`
-	DBHost         string `mapstructure:"DB_HOST"`
-	DBPort         string `mapstructure:"DB_PORT"`
-	DBName         string `mapstructure:"DB_NAME"`
-	JWTSecret      string `mapstructure:"JWT_SECRET"`
-	AuthHeader     string `mapstructure:"AUTH_HEADER"`
-	FrontendURL    string
-	OAuthProviders []OAuthProvider
+	ServerPort       string `mapstructure:"SERVER_PORT"`
+	LogLevel         string `mapstructure:"SERVER_LOG_LEVEL"`
+	Environment      string `mapstructure:"ENV"`
+	DBUsername       string `mapstructure:"DB_USER"`
+	DBPassword       string `mapstructure:"DB_PASS"`
+	DBHost           string `mapstructure:"DB_HOST"`
+	DBPort           string `mapstructure:"DB_PORT"`
+	DBName           string `mapstructure:"DB_NAME"`
+	JWTSecret        string `mapstructure:"JWT_SECRET"`
+	AuthHeader       string `mapstructure:"AUTH_HEADER"`
+	SyncInterval     string
+	SyncPollInterval string
+	SyncBatchSize    int
+	FrontendURL      string
+	OAuthProviders   []OAuthProvider
+	Customization    Customization
 }
 
 func (e Env) GetOAuthProvider(name string) (OAuthProvider, bool) {
@@ -125,10 +142,47 @@ func NewEnv() Env {
 		os.Getenv("FRONTEND_URL"),
 		"http://localhost:3000",
 	)
+	env.SyncInterval = firstNonEmpty(
+		getConfigValue("sync.interval", "", ""),
+		os.Getenv("SYNC_INTERVAL"),
+		"6h",
+	)
+	env.SyncPollInterval = firstNonEmpty(
+		getConfigValue("sync.poll_interval", "", ""),
+		os.Getenv("SYNC_POLL_INTERVAL"),
+		"30s",
+	)
+
+	batchSizeRaw := firstNonEmpty(
+		getConfigValue("sync.batch_size", "", ""),
+		os.Getenv("SYNC_BATCH_SIZE"),
+		"25",
+	)
+	if v, err := strconv.Atoi(batchSizeRaw); err != nil || v <= 0 {
+		env.SyncBatchSize = 25
+	} else {
+		env.SyncBatchSize = v
+	}
 
 	var providers []OAuthProvider
 	if err := viper.UnmarshalKey("sso.providers", &providers); err == nil {
 		env.OAuthProviders = providers
+	}
+
+	if err := viper.UnmarshalKey("customization", &env.Customization); err != nil || env.Customization.BannerTitle == "" {
+		env.Customization.BannerTitle = "The biggest library of\nstarter boilerplates"
+	}
+	if env.Customization.Logo == "" {
+		env.Customization.Logo = "/kikplate-logo-on-dark.svg"
+	}
+
+	if len(env.Customization.SocialMedia) == 0 {
+		env.Customization.SocialMedia = []SocialMediaLink{
+			{Type: "github", Link: "https://github.com/kickplate"},
+			{Type: "slack", Link: "#"},
+			{Type: "linkedin", Link: "#"},
+			{Type: "x", Link: "#"},
+		}
 	}
 
 	return env

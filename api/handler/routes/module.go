@@ -10,6 +10,8 @@ var Module = fx.Options(
 	fx.Provide(NewHelloRoutes),
 	fx.Provide(NewPlateRoutes),
 	fx.Provide(NewBadgeRoutes),
+	fx.Provide(NewOrganizationRoutes),
+	fx.Provide(NewConfigRoutes),
 )
 
 type Route interface {
@@ -23,12 +25,16 @@ func NewRoutes(
 	authRoutes AuthRoutes,
 	plate PlateRoutes,
 	badge BadgeRoutes,
+	org OrganizationRoutes,
+	config ConfigRoutes,
 ) Routes {
 	return Routes{
 		helloRoutes,
 		authRoutes,
 		plate,
 		badge,
+		org,
+		config,
 	}
 }
 

@@ -1,0 +1,721 @@
+openapi: 3.0.3
+info:
+  title: Kikplate API
+  version: 1.0.0
+  description: HTTP API for auth, plates, organizations, and badges.
+servers:
+  - url: http://localhost:3001
+    description: Local
+  - url: https://api.example.com
+    description: Production (example)
+tags:
+  - name: Auth
+  - name: Plates
+  - name: Organizations
+  - name: Badges
+  - name: Health
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+    AuthTokens:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+    PlateListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        total:
+          type: integer
+    OrganizationListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+paths:
+  /hello:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register local user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, email, password]
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Registered
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/verify-email:
+    get:
+      tags: [Auth]
+      summary: Verify email token
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Verified
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with local credentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokens'
+
+  /auth/providers:
+    get:
+      tags: [Auth]
+      summary: List OAuth providers
+      responses:
+        '200':
+          description: OK
+
+  /auth/{provider}/redirect:
+    get:
+      tags: [Auth]
+      summary: OAuth redirect URL
+      parameters:
+        - in: path
+          name: provider
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect
+
+  /auth/{provider}/callback:
+    get:
+      tags: [Auth]
+      summary: OAuth callback
+      parameters:
+        - in: path
+          name: provider
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Logged in
+
+  /me:
+    get:
+      tags: [Auth]
+      summary: Get current account profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+
+  /me/profile:
+    patch:
+      tags: [Auth]
+      summary: Update display profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name:
+                  type: string
+                avatar_url:
+                  type: string
+      responses:
+        '200':
+          description: Updated
+
+  /me/username:
+    patch:
+      tags: [Auth]
+      summary: Set or update username
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username:
+                  type: string
+      responses:
+        '200':
+          description: Updated
+
+  /plates:
+    get:
+      tags: [Plates]
+      summary: List plates
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: categories
+          schema:
+            type: string
+        - in: query
+          name: tags
+          schema:
+            type: string
+        - in: query
+          name: owner_id
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlateListResponse'
+
+  /plates/stats:
+    get:
+      tags: [Plates]
+      summary: Aggregated plate stats
+      responses:
+        '200':
+          description: OK
+
+  /plates/filters:
+    get:
+      tags: [Plates]
+      summary: Filter options for listing
+      responses:
+        '200':
+          description: OK
+
+  /plates/bookmarked:
+    get:
+      tags: [Plates]
+      summary: List current user's bookmarked plates
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 48
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlateListResponse'
+        '401':
+          description: Unauthorized
+
+  /plates/repository:
+    post:
+      tags: [Plates]
+      summary: Submit repository-backed plate
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [repo_url]
+              properties:
+                repo_url:
+                  type: string
+                branch:
+                  type: string
+                organization_id:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  /plates/{slug}:
+    get:
+      tags: [Plates]
+      summary: Get plate by slug
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not found
+
+  /plates/{id}:
+    patch:
+      tags: [Plates]
+      summary: Update plate
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                category:
+                  type: string
+                visibility:
+                  type: string
+      responses:
+        '200':
+          description: Updated
+
+    delete:
+      tags: [Plates]
+      summary: Archive plate
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Archived
+
+  /plates/{id}/remove:
+    delete:
+      tags: [Plates]
+      summary: Hard delete plate
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Removed
+
+  /plates/{id}/verify:
+    post:
+      tags: [Plates]
+      summary: Verify repository plate token
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Verified
+
+  /plates/{id}/organization:
+    put:
+      tags: [Plates]
+      summary: Move plate organization scope
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                organization_id:
+                  type: string
+      responses:
+        '200':
+          description: Updated
+
+  /plates/{id}/bookmark:
+    post:
+      tags: [Plates]
+      summary: Set bookmark state for current user
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookmarked]
+              properties:
+                bookmarked:
+                  type: boolean
+      responses:
+        '204':
+          description: Updated
+
+  /plates/{id}/reviews:
+    post:
+      tags: [Plates]
+      summary: Submit plate review
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              properties:
+                rating:
+                  type: integer
+                title:
+                  type: string
+                body:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  /plates/{id}/tags:
+    put:
+      tags: [Plates]
+      summary: Replace plate tags
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '204':
+          description: Updated
+
+  /plates/{id}/approve:
+    post:
+      tags: [Plates]
+      summary: Approve plate
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Approved
+
+  /plates/{id}/reject:
+    post:
+      tags: [Plates]
+      summary: Reject plate
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Rejected
+
+  /plates/{id}/badges:
+    post:
+      tags: [Plates]
+      summary: Grant badge to plate
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [badge_slug]
+              properties:
+                badge_slug:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        '201':
+          description: Granted
+
+  /plates/{id}/badges/{slug}:
+    delete:
+      tags: [Plates]
+      summary: Revoke badge from plate
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Revoked
+
+  /organizations:
+    get:
+      tags: [Organizations]
+      summary: List public organizations
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationListResponse'
+    post:
+      tags: [Organizations]
+      summary: Create organization
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, description]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                logo_url:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  /organizations/me:
+    get:
+      tags: [Organizations]
+      summary: List current user's organizations
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+
+  /organizations/by-name/{name}:
+    get:
+      tags: [Organizations]
+      summary: Get organization by name
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not found
+
+  /organizations/{id}:
+    get:
+      tags: [Organizations]
+      summary: Get organization by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    put:
+      tags: [Organizations]
+      summary: Update organization
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                logo_url:
+                  type: string
+      responses:
+        '200':
+          description: Updated
+    delete:
+      tags: [Organizations]
+      summary: Delete organization
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  /badges:
+    get:
+      tags: [Badges]
+      summary: List badge catalog
+      responses:
+        '200':
+          description: OK

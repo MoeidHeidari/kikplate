@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import {
-  GitBranch, FileText, Download, Star,
-  Shield, Tag, CheckCircle2
+  GitBranch, Heart, Star,
+  Shield, Tag, CheckCircle2, AlertTriangle
 } from "lucide-react"
 import type { Plate } from "@/src/domain/entities/Plate"
 import { formatCount, tierColour } from "@/src/presentation/utils/plateUtils"
@@ -14,14 +14,10 @@ export function PlateCard({ plate }: { plate: Plate }) {
       href={`/plates/${plate.slug}`}
       className="group flex flex-col gap-0 border border-border bg-card hover:border-foreground/20 hover:shadow-sm transition-all overflow-hidden"
     >
-      {/* header */}
       <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-3">
         <div className="flex items-center gap-2 min-w-0">
           <div className="shrink-0 text-muted-foreground">
-            {plate.type === "file"
-              ? <FileText className="h-4 w-4" />
-              : <GitBranch className="h-4 w-4" />
-            }
+            <GitBranch className="h-4 w-4" />
           </div>
           <p className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
             {plate.name}
@@ -30,9 +26,11 @@ export function PlateCard({ plate }: { plate: Plate }) {
         {plate.is_verified && (
           <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0 mt-0.5" />
         )}
+        {!plate.is_verified && plate.sync_status === "unverified" && (
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+        )}
       </div>
 
-      {/* description */}
       <div className="px-4 pb-3 min-h-[2.5rem]">
         {plate.description ? (
           <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
@@ -43,7 +41,6 @@ export function PlateCard({ plate }: { plate: Plate }) {
         )}
       </div>
 
-      {/* tags */}
       {plate.tags && plate.tags.length > 0 && (
         <div className="px-4 pb-3 flex flex-wrap gap-1">
           {plate.tags.slice(0, 4).map((t) => (
@@ -63,7 +60,6 @@ export function PlateCard({ plate }: { plate: Plate }) {
         </div>
       )}
 
-      {/* badges */}
       {plate.badges && plate.badges.length > 0 && (
         <div className="px-4 pb-3 flex flex-wrap gap-1">
           {plate.badges.slice(0, 3).map((pb) => pb.badge && (
@@ -78,9 +74,15 @@ export function PlateCard({ plate }: { plate: Plate }) {
         </div>
       )}
 
-      {/* footer */}
       <div className="mt-auto flex items-center justify-between px-4 py-3 border-t border-border bg-muted/20">
-        <span className="text-xs text-muted-foreground capitalize">{plate.category}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground capitalize">{plate.category}</span>
+          {!plate.is_verified && plate.sync_status === "unverified" && (
+            <span className="inline-flex items-center gap-1 border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+              Unverified
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           {plate.avg_rating > 0 && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -89,8 +91,8 @@ export function PlateCard({ plate }: { plate: Plate }) {
             </div>
           )}
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Download className="h-3 w-3" />
-            {formatCount(plate.use_count)}
+            <Heart className="h-3 w-3" />
+            {formatCount(plate.bookmark_count)}
           </div>
         </div>
       </div>

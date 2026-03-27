@@ -2,26 +2,25 @@
 
 import Link from "next/link"
 import { usePlates } from "@/src/presentation/hooks/usePlates"
-import { GitBranch, FileText, Star, Download } from "lucide-react"
+import { GitBranch, Star, Heart, ArrowRight, Sparkles } from "lucide-react"
 import { formatCount } from "@/src/presentation/utils/plateUtils"
 import type { Plate } from "@/src/domain/entities/Plate"
+import { buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 function FeaturedPlateCard({ plate }: { plate: Plate }) {
   return (
     <Link
       href={`/plates/${plate.slug}`}
-      className="group flex flex-col gap-3 border border-gray-100 bg-white p-5 hover:border-gray-300 hover:shadow-sm transition-all"
+      className="group flex h-full flex-col gap-3 border border-border bg-card p-5 transition-colors hover:border-foreground/20 hover:bg-muted/20"
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 text-gray-400">
-          {plate.type === "file"
-            ? <FileText className="h-4 w-4 shrink-0" />
-            : <GitBranch className="h-4 w-4 shrink-0" />
-          }
-          <span className="text-xs capitalize text-gray-400">{plate.type}</span>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <GitBranch className="h-4 w-4 shrink-0" />
+          <span className="text-xs capitalize">{plate.type}</span>
         </div>
         {plate.avg_rating > 0 && (
-          <div className="flex items-center gap-1 text-xs text-gray-400">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Star className="h-3 w-3" />
             {plate.avg_rating.toFixed(1)}
           </div>
@@ -29,21 +28,21 @@ function FeaturedPlateCard({ plate }: { plate: Plate }) {
       </div>
 
       <div>
-        <p className="font-semibold text-gray-900 group-hover:text-gray-600 transition-colors truncate">
+        <p className="truncate font-semibold text-foreground transition-colors group-hover:text-primary">
           {plate.name}
         </p>
         {plate.description && (
-          <p className="text-xs text-gray-400 mt-1 line-clamp-2">
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
             {plate.description}
           </p>
         )}
       </div>
 
-      <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
-        <span className="text-xs text-gray-400 capitalize">{plate.category}</span>
-        <div className="flex items-center gap-1 text-xs text-gray-400">
-          <Download className="h-3 w-3" />
-          {formatCount(plate.use_count)}
+      <div className="mt-auto flex items-center justify-between border-t border-border pt-2">
+        <span className="text-xs capitalize text-muted-foreground">{plate.category}</span>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Heart className="h-3 w-3" />
+          {formatCount(plate.bookmark_count)}
         </div>
       </div>
     </Link>
@@ -55,36 +54,66 @@ export function FeaturedPlates() {
   const plates = data?.data ?? []
 
   return (
-    <section className="bg-white border-t border-gray-100 py-16">
+    <section className="bg-background py-16">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Most used</h2>
-            <p className="text-sm text-gray-400 mt-1">
-              Templates developers reach for most
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Discover
+            </p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-foreground">Most Used Plates</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Templates developers repeatedly trust in production.
             </p>
           </div>
           <Link
             href="/explore"
-            className="text-sm text-gray-400 hover:text-gray-900 transition-colors"
+            className="inline-flex items-center gap-1.5 border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-muted"
           >
-            View all →
+            Explore all
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-40 border border-gray-100 bg-gray-50 animate-pulse" />
+              <div key={i} className="h-40 animate-pulse border border-border bg-muted/30" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {plates.map((plate) => (
               <FeaturedPlateCard key={plate.id} plate={plate} />
             ))}
           </div>
         )}
+
+        <div className="mt-6 border border-border bg-card p-5">
+          <div className="mb-4 flex items-center gap-2 text-muted-foreground">
+            <Sparkles className="h-4 w-4" />
+            <p className="text-xs font-semibold uppercase tracking-widest">Contribute</p>
+          </div>
+          <h3 className="text-xl font-bold text-foreground">Publish your own plate</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Share your starter with the community and help other developers ship faster.
+          </p>
+
+          <ul className="mt-5 space-y-2 border-t border-border pt-4 text-sm text-muted-foreground">
+            <li>Repository templates</li>
+            <li>Clear ownership and metadata</li>
+            <li>Discoverable in explore and search</li>
+          </ul>
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            <Link
+              href="/submit"
+              className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
+            >
+              Submit a plate
+            </Link>
+          </div>
+        </div>
       </div>
     </section>
   )

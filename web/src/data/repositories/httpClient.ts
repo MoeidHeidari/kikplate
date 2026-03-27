@@ -17,7 +17,12 @@ export class ApiError extends Error {
 function buildQuery(params: Record<string, unknown>): string {
   const q = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) {
-    if (v !== undefined && v !== null && v !== "") q.set(k, String(v))
+    if (v === undefined || v === null || v === "") continue
+    if (Array.isArray(v)) {
+      if (v.length > 0) q.set(k, v.join(","))
+    } else {
+      q.set(k, String(v))
+    }
   }
   const s = q.toString()
   return s ? `?${s}` : ""
@@ -35,7 +40,7 @@ async function httpFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (!res.ok) {
     let message = res.statusText
-    try { const d = await res.json(); message = d.error ?? message } catch { /* noop */ }
+    try { const d = await res.json(); message = d.error ?? message } catch {}
     throw new ApiError(res.status, message)
   }
 
@@ -56,6 +61,12 @@ export const http = {
   patch<T>(path: string, body?: unknown) {
     return httpFetch<T>(path, {
       method: "PATCH",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    })
+  },
+  put<T>(path: string, body?: unknown) {
+    return httpFetch<T>(path, {
+      method: "PUT",
       body: body !== undefined ? JSON.stringify(body) : undefined,
     })
   },

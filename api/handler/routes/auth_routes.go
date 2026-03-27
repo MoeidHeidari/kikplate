@@ -38,9 +38,10 @@ func (r AuthRoutes) Setup() {
 		router.Get("/providers", r.handler.Providers)
 	})
 
-	// protected routes
 	r.mux.Mux.Group(func(router chi.Router) {
 		router.Use(middleware.RequireAuth)
 		router.Get("/me", r.handler.Me)
+		router.Patch("/me/profile", r.handler.UpdateProfile)
+		router.Patch("/me/username", r.handler.SetUsername)
 	})
 }

@@ -15,6 +15,13 @@ type AuthService interface {
 	OAuthCallback(ctx context.Context, input OAuthCallbackInput) (*AuthResult, error)
 	LoginHeader(ctx context.Context, providerUserID string) (*AuthResult, error)
 	GetMe(ctx context.Context, accountID uuid.UUID) (*MeResult, error)
+	SetUsername(ctx context.Context, accountID uuid.UUID, username string) error
+	UpdateProfile(ctx context.Context, accountID uuid.UUID, input UpdateProfileInput) (*MeResult, error)
+}
+
+type UpdateProfileInput struct {
+	DisplayName *string
+	AvatarURL   *string
 }
 
 type MeResult struct {

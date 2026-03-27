@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/kickplate/api/service/auth"
+	organizationservice "github.com/kickplate/api/service/organization"
 	plateservice "github.com/kickplate/api/service/plate"
 )
 
@@ -25,6 +26,8 @@ func respondServiceError(w http.ResponseWriter, err error) {
 		respondError(w, http.StatusConflict, err.Error())
 	case errors.Is(err, auth.ErrUsernameTaken):
 		respondError(w, http.StatusConflict, err.Error())
+	case errors.Is(err, auth.ErrInvalidUsername):
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
 	case errors.Is(err, auth.ErrInvalidPassword):
 		respondError(w, http.StatusUnauthorized, err.Error())
 	case errors.Is(err, auth.ErrAccountInactive):
@@ -45,13 +48,35 @@ func respondServiceError(w http.ResponseWriter, err error) {
 		respondError(w, http.StatusForbidden, err.Error())
 	case errors.Is(err, plateservice.ErrConflict):
 		respondError(w, http.StatusConflict, err.Error())
+	case errors.Is(err, plateservice.ErrAlreadyReviewed):
+		respondError(w, http.StatusConflict, err.Error())
+	case errors.Is(err, plateservice.ErrCannotReviewOwn):
+		respondError(w, http.StatusForbidden, err.Error())
+	case errors.Is(err, plateservice.ErrNoUsername):
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
 	case errors.Is(err, plateservice.ErrOwnerMismatch):
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
+	case errors.Is(err, plateservice.ErrNotPendingVerification):
+		respondError(w, http.StatusConflict, err.Error())
+	case errors.Is(err, plateservice.ErrVerificationTokenMismatch):
 		respondError(w, http.StatusUnprocessableEntity, err.Error())
 	case errors.Is(err, plateservice.ErrMissingYAML):
 		respondError(w, http.StatusUnprocessableEntity, err.Error())
 	case errors.Is(err, plateservice.ErrFetchFailed):
 		respondError(w, http.StatusBadGateway, err.Error())
 	case errors.Is(err, plateservice.ErrInvalidInput):
+		respondError(w, http.StatusBadRequest, err.Error())
+	case errors.Is(err, plateservice.ErrOrganizationRequired):
+		respondError(w, http.StatusBadRequest, err.Error())
+	case errors.Is(err, organizationservice.ErrNameTaken):
+		respondError(w, http.StatusConflict, err.Error())
+	case errors.Is(err, organizationservice.ErrNotOwner):
+		respondError(w, http.StatusForbidden, err.Error())
+	case errors.Is(err, organizationservice.ErrHasPlates):
+		respondError(w, http.StatusConflict, err.Error())
+	case errors.Is(err, organizationservice.ErrNotFound):
+		respondError(w, http.StatusNotFound, err.Error())
+	case errors.Is(err, organizationservice.ErrNameRequired):
 		respondError(w, http.StatusBadRequest, err.Error())
 	default:
 		respondError(w, http.StatusInternalServerError, "internal server error")

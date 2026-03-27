@@ -157,6 +157,61 @@ func (h AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, result)
 }
 
+func (h AuthHandler) SetUsername(w http.ResponseWriter, r *http.Request) {
+	accountID, ok := middleware.GetAccountID(r.Context())
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
+	var body struct {
+		Username string `json:"username"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if err := h.authService.SetUsername(r.Context(), accountID, body.Username); err != nil {
+		h.logger.Errorf("set username failed: %v", err)
+		respondServiceError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"message": "username set successfully",
+	})
+}
+
+func (h AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	accountID, ok := middleware.GetAccountID(r.Context())
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
+	var body struct {
+		DisplayName *string `json:"display_name"`
+		AvatarURL   *string `json:"avatar_url"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	result, err := h.authService.UpdateProfile(r.Context(), accountID, auth.UpdateProfileInput{
+		DisplayName: body.DisplayName,
+		AvatarURL:   body.AvatarURL,
+	})
+	if err != nil {
+		h.logger.Errorf("update profile failed: %v", err)
+		respondServiceError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, result)
+}
+
 func (h AuthHandler) Providers(w http.ResponseWriter, r *http.Request) {
 	providers := h.env.OAuthProviders
 	names := make([]string, 0, len(providers))

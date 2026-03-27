@@ -46,6 +46,22 @@ export function useVerifyEmail() {
   })
 }
 
+export function useUpdateProfile() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { display_name?: string; avatar_url?: string }) => authRepository.updateProfile(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["me"] }),
+  })
+}
+
+export function useSetUsername() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (username: string) => authRepository.setUsername(username),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["me"] }),
+  })
+}
+
 export function useLogout() {
   const qc = useQueryClient()
   return () => {

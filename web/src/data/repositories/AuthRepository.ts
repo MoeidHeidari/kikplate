@@ -17,6 +17,12 @@ class AuthRepository implements IAuthRepository {
   me(): Promise<MeResult> {
     return http.get("/me")
   }
+  updateProfile(input: { display_name?: string; avatar_url?: string }): Promise<MeResult> {
+    return http.patch("/me/profile", input)
+  }
+  setUsername(username: string): Promise<{ message: string }> {
+    return http.patch("/me/username", { username })
+  }
   oauthRedirectURL(provider: string): string {
     return `${BASE}/auth/${provider}/redirect`
   }

@@ -11,10 +11,10 @@ import (
 
 var cmds = map[string]lib.Command{
 	"app:serve": NewServeCommand(),
+	"app:sync":  NewSyncCommand(),
 	"db:seed":   NewSeedCommand(),
 }
 
-// GetSubCommands gives a list of sub commands
 func GetSubCommands(opt fx.Option) []*cobra.Command {
 	var subCommands []*cobra.Command
 	for name, cmd := range cmds {

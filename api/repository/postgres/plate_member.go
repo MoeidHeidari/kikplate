@@ -46,11 +46,19 @@ func (r *plateMemberRepository) ListByAccount(ctx context.Context, accountID uui
 	return members, result.Error
 }
 
-func (r *plateMemberRepository) UpdateLastUsedAt(ctx context.Context, plateID, accountID uuid.UUID, t time.Time) error {
+func (r *plateMemberRepository) SetBookmarked(ctx context.Context, plateID, accountID uuid.UUID, bookmarked bool) error {
+	now := time.Now()
+	var bookmarkedAt *time.Time
+	if bookmarked {
+		bookmarkedAt = &now
+	}
 	return r.db.WithContext(ctx).
 		Model(&model.PlateMember{}).
 		Where("plate_id = ? AND account_id = ?", plateID, accountID).
-		Update("last_used_at", t).Error
+		Updates(map[string]any{
+			"is_bookmarked": bookmarked,
+			"bookmarked_at": bookmarkedAt,
+		}).Error
 }
 
 func (r *plateMemberRepository) Delete(ctx context.Context, plateID, accountID uuid.UUID) error {

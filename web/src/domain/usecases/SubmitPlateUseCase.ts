@@ -1,10 +1,5 @@
 import type { IPlateRepository } from "@/src/domain/repositories/IPlateRepository"
-import type { SubmitFileInput, SubmitRepositoryInput } from "@/src/domain/entities/Plate"
-
-export class SubmitFileUseCase {
-  constructor(private readonly repo: IPlateRepository) {}
-  execute(input: SubmitFileInput) { return this.repo.submitFile(input) }
-}
+import type { SubmitRepositoryInput } from "@/src/domain/entities/Plate"
 
 export class SubmitRepositoryUseCase {
   constructor(private readonly repo: IPlateRepository) {}

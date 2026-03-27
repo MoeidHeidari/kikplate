@@ -21,28 +21,39 @@ export function CategoriesGrid() {
   const router = useRouter()
 
   return (
-    <section className="container mx-auto px-4 py-16 border-t border-border">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold">Browse by category</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Find templates for your specific use case
-        </p>
-      </div>
+    <section className="bg-muted/10 py-16">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <div className="border border-border bg-card p-5 sm:p-6 lg:col-span-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Taxonomy
+            </p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-foreground">Browse by category</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Find templates by domain, from backend services to mobile apps and infrastructure.
+            </p>
+            <p className="mt-6 border-t border-border pt-4 text-xs text-muted-foreground">8 core domains</p>
+          </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {CATEGORIES.map(({ slug, label, icon: Icon, description }) => (
-          <button
-            key={slug}
-            onClick={() => router.push(`/explore?category=${slug}`)}
-            className="group flex flex-col gap-3 border border-border bg-card p-5 text-left hover:border-foreground/20 hover:bg-muted/50 transition-all"
-          >
-            <Icon className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-            <div>
-              <p className="text-sm font-semibold text-foreground">{label}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
-            </div>
-          </button>
-        ))}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:col-span-8">
+            {CATEGORIES.map(({ slug, label, icon: Icon, description }, i) => (
+              <button
+                key={slug}
+                onClick={() => router.push(`/explore?category=${slug}`)}
+                className="group flex items-start gap-4 border border-border bg-card p-5 text-left transition-colors hover:border-foreground/20 hover:bg-background"
+              >
+                <div className="mt-0.5 flex flex-col items-center gap-2 text-muted-foreground">
+                  <Icon className="h-5 w-5 transition-colors group-hover:text-foreground" />
+                  <span className="text-[10px] tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{label}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   )

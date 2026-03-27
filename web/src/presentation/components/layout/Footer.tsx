@@ -4,11 +4,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border bg-background">
       <div className="container mx-auto px-4 py-12">
-
-        {/* top — brand + columns */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-12">
-
-          {/* brand */}
           <div className="col-span-2 sm:col-span-1 space-y-3">
             <p className="text-sm font-semibold text-foreground">
               Kik<span className="font-bold">Plate</span>
@@ -26,7 +22,6 @@ export function Footer() {
             </Link>
           </div>
 
-          {/* product */}
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Product
@@ -34,6 +29,7 @@ export function Footer() {
             <ul className="space-y-2">
               {[
                 { label: "Explore", href: "/explore" },
+                { label: "Stats", href: "/stats" },
                 { label: "Submit a plate", href: "/submit" },
                 { label: "Account", href: "/account" },
               ].map((link) => (
@@ -49,7 +45,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* community */}
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Community
@@ -74,7 +69,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* resources */}
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Resources
@@ -101,8 +95,6 @@ export function Footer() {
           </div>
 
         </div>
-
-        {/* bottom — copyright + legal */}
         <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} KikPlate. Open source and free forever.

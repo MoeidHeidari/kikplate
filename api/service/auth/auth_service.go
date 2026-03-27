@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -241,6 +242,102 @@ func (s *authService) LoginHeader(ctx context.Context, providerUserID string) (*
 	}
 
 	return s.buildResult(ctx, account)
+}
+
+func (s *authService) SetUsername(ctx context.Context, accountID uuid.UUID, username string) error {
+	if username == "" {
+		return ErrInvalidUsername
+	}
+
+	existing, err := s.userRepo.GetByUsername(ctx, username)
+	if err != nil {
+		return err
+	}
+	if existing != nil {
+		return ErrUsernameTaken
+	}
+
+	account, err := s.accountRepo.GetByID(ctx, accountID)
+	if err != nil {
+		return err
+	}
+	if account == nil {
+		return ErrNotFound
+	}
+
+	if account.UserID != nil {
+		user, err := s.userRepo.GetByID(ctx, *account.UserID)
+		if err != nil {
+			return err
+		}
+		if user != nil {
+			user.Username = username
+			return s.userRepo.Update(ctx, user)
+		}
+	}
+
+	user := &model.User{
+		ID:           uuid.New(),
+		Username:     username,
+		Email:        "",
+		PasswordHash: "",
+		Role:         model.UserRoleMember,
+		IsActive:     true,
+	}
+
+	if err := s.userRepo.Create(ctx, user); err != nil {
+		return err
+	}
+
+	account.UserID = &user.ID
+	return s.accountRepo.Update(ctx, account)
+}
+
+func (s *authService) UpdateProfile(ctx context.Context, accountID uuid.UUID, input UpdateProfileInput) (*MeResult, error) {
+	account, err := s.accountRepo.GetByID(ctx, accountID)
+	if err != nil {
+		return nil, err
+	}
+	if account == nil {
+		return nil, ErrNotFound
+	}
+
+	if input.DisplayName != nil {
+		displayName := strings.TrimSpace(*input.DisplayName)
+		if displayName == "" {
+			account.DisplayName = nil
+		} else {
+			account.DisplayName = &displayName
+		}
+	}
+
+	if input.AvatarURL != nil {
+		avatarURL := strings.TrimSpace(*input.AvatarURL)
+		if avatarURL == "" {
+			account.AvatarURL = nil
+		} else {
+			account.AvatarURL = &avatarURL
+		}
+	}
+
+	if err := s.accountRepo.Update(ctx, account); err != nil {
+		return nil, err
+	}
+
+	if account.UserID != nil && input.AvatarURL != nil {
+		user, err := s.userRepo.GetByID(ctx, *account.UserID)
+		if err != nil {
+			return nil, err
+		}
+		if user != nil {
+			user.AvatarURL = account.AvatarURL
+			if err := s.userRepo.Update(ctx, user); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return s.GetMe(ctx, accountID)
 }
 
 func (s *authService) findOrCreateOAuthUser(ctx context.Context, profile *oauthProfile) (*model.User, error) {

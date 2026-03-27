@@ -9,10 +9,8 @@ import (
 )
 
 type PlateFilter struct {
-	Type       *model.PlateType
-	Status     *model.PlateStatus
-	Visibility *model.PlateVisibility
-	Category   string
+	Types      []model.PlateType
+	Categories []string
 	Tags       []string
 	OwnerID    *uuid.UUID
 	Search     string
@@ -34,7 +32,12 @@ type PlateStats struct {
 	TotalPlates       int64 `json:"total_plates"`
 	TotalContributors int64 `json:"total_contributors"`
 	TotalCategories   int64 `json:"total_categories"`
-	TotalUses         int64 `json:"total_uses"`
+	TotalBookmarks    int64 `json:"total_bookmarks"`
+}
+
+type PlateFilterOptions struct {
+	Categories []string `json:"categories"`
+	Tags       []string `json:"tags"`
 }
 type UserRepository interface {
 	Create(ctx context.Context, user *model.User) error
@@ -68,10 +71,12 @@ type PlateRepository interface {
 	List(ctx context.Context, filter PlateFilter) ([]*model.Plate, int, error)
 	Update(ctx context.Context, plate *model.Plate) error
 	Delete(ctx context.Context, id uuid.UUID) error
-	IncrementUseCount(ctx context.Context, id uuid.UUID) error
+	IncrementBookmarkCount(ctx context.Context, id uuid.UUID) error
+	DecrementBookmarkCount(ctx context.Context, id uuid.UUID) error
 	UpdateSyncState(ctx context.Context, id uuid.UUID, state PlateSyncState) error
 	ListDueForSync(ctx context.Context, limit int) ([]*model.Plate, error)
 	GetStats(ctx context.Context) (*PlateStats, error)
+	GetFilterOptions(ctx context.Context) (*PlateFilterOptions, error)
 }
 
 type PlateMemberRepository interface {
@@ -79,7 +84,7 @@ type PlateMemberRepository interface {
 	GetByPlateAndAccount(ctx context.Context, plateID, accountID uuid.UUID) (*model.PlateMember, error)
 	ListByPlate(ctx context.Context, plateID uuid.UUID) ([]*model.PlateMember, error)
 	ListByAccount(ctx context.Context, accountID uuid.UUID) ([]*model.PlateMember, error)
-	UpdateLastUsedAt(ctx context.Context, plateID, accountID uuid.UUID, t time.Time) error
+	SetBookmarked(ctx context.Context, plateID, accountID uuid.UUID, bookmarked bool) error
 	Delete(ctx context.Context, plateID, accountID uuid.UUID) error
 }
 
@@ -111,8 +116,13 @@ type PlateBadgeRepository interface {
 	Revoke(ctx context.Context, plateID, badgeID uuid.UUID) error
 }
 
-type SyncLogRepository interface {
-	Create(ctx context.Context, log *model.SyncLog) error
-	ListByPlate(ctx context.Context, plateID uuid.UUID, limit int) ([]*model.SyncLog, error)
-	DeleteOlderThan(ctx context.Context, t time.Time) error
+type OrganizationRepository interface {
+	Create(ctx context.Context, org *model.Organization) error
+	GetByID(ctx context.Context, id uuid.UUID) (*model.Organization, error)
+	GetByName(ctx context.Context, name string) (*model.Organization, error)
+	ListByOwner(ctx context.Context, ownerID uuid.UUID) ([]*model.Organization, error)
+	ListPublic(ctx context.Context, limit, offset int) ([]*model.Organization, int, error)
+	Update(ctx context.Context, org *model.Organization) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	CountPlates(ctx context.Context, orgID uuid.UUID) (int, error)
 }
