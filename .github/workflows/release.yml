@@ -181,18 +181,18 @@ jobs:
       - name: Prepare release notes file
         run: |
           if [ -n "${{ inputs.changelog }}" ]; then
-            cat <<'EOF' > RELEASE_NOTES.md
-            ${{ inputs.changelog }}
-            EOF
+            cat > RELEASE_NOTES.md <<'EOF'
+          ${{ inputs.changelog }}
+          EOF
           elif [ -f "${{ inputs.changelog_file }}" ]; then
             cp "${{ inputs.changelog_file }}" RELEASE_NOTES.md
           else
-            cat <<'EOF' > RELEASE_NOTES.md
-            ## Release Notes
+            cat > RELEASE_NOTES.md <<'EOF'
+          ## Release Notes
 
-            - No custom changelog was provided.
-            - See commit history and generated notes for details.
-            EOF
+          - No custom changelog was provided.
+          - See commit history and generated notes for details.
+          EOF
           fi
 
       - name: Prepare image names
