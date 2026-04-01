@@ -13,8 +13,13 @@ on:
           - minor
           - major
       changelog:
-        description: Markdown release notes to attach to the GitHub Release
-        required: true
+        description: Optional inline markdown notes (short text field in UI)
+        required: false
+        type: string
+      changelog_file:
+        description: Optional markdown file path in repo (recommended for long notes)
+        required: false
+        default: .github/release-notes.md
         type: string
 
 permissions:
@@ -146,9 +151,20 @@ jobs:
 
       - name: Prepare release notes file
         run: |
-          cat <<'EOF' > RELEASE_NOTES.md
-          ${{ inputs.changelog }}
-          EOF
+          if [ -n "${{ inputs.changelog }}" ]; then
+            cat <<'EOF' > RELEASE_NOTES.md
+            ${{ inputs.changelog }}
+            EOF
+          elif [ -f "${{ inputs.changelog_file }}" ]; then
+            cp "${{ inputs.changelog_file }}" RELEASE_NOTES.md
+          else
+            cat <<'EOF' > RELEASE_NOTES.md
+            ## Release Notes
+
+            - No custom changelog was provided.
+            - See commit history and generated notes for details.
+            EOF
+          fi
 
       - name: Prepare image names
         id: prep
@@ -217,4 +233,4 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}
           body_path: RELEASE_NOTES.md
-          generate_release_notes: true
+          generate_release_notes: false

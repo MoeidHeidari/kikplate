@@ -17,9 +17,18 @@ on:
         description: Optional RC tag override (for image tags)
         required: false
         type: string
+      changelog:
+        description: Optional inline markdown notes for GitHub prerelease
+        required: false
+        type: string
+      changelog_file:
+        description: Optional markdown file path in repo (recommended for long notes)
+        required: false
+        default: .github/rc-notes.md
+        type: string
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 concurrency:
@@ -128,6 +137,25 @@ jobs:
           echo "owner=${owner}" >> "${GITHUB_OUTPUT}"
           echo "rc_tag=${rc_tag}" >> "${GITHUB_OUTPUT}"
 
+      - name: Prepare prerelease notes file
+        run: |
+          if [ -n "${{ inputs.changelog }}" ]; then
+            cat <<'EOF' > RC_NOTES.md
+            ${{ inputs.changelog }}
+            EOF
+          elif [ -f "${{ inputs.changelog_file }}" ]; then
+            cp "${{ inputs.changelog_file }}" RC_NOTES.md
+          else
+            cat <<'EOF' > RC_NOTES.md
+            ## Release Candidate
+
+            - Ref: ${{ needs.resolve-ref.outputs.ref }}
+            - Image tag: ${{ steps.prep.outputs.rc_tag }}
+            - API image: ghcr.io/${{ steps.prep.outputs.owner }}/kikplate-api:${{ steps.prep.outputs.rc_tag }}
+            - Web image: ghcr.io/${{ steps.prep.outputs.owner }}/kikplate-web:${{ steps.prep.outputs.rc_tag }}
+            EOF
+          fi
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -167,3 +195,23 @@ jobs:
           tags: |
             ghcr.io/${{ steps.prep.outputs.owner }}/kikplate-web:${{ steps.prep.outputs.rc_tag }}
             ghcr.io/${{ steps.prep.outputs.owner }}/kikplate-web:pre-release-latest
+
+      - name: Create git RC tag
+        run: |
+          if git rev-parse "${{ steps.prep.outputs.rc_tag }}" >/dev/null 2>&1; then
+            echo "Tag ${{ steps.prep.outputs.rc_tag }} already exists" >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "${{ steps.prep.outputs.rc_tag }}"
+          git push origin "${{ steps.prep.outputs.rc_tag }}"
+
+      - name: Create GitHub prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.prep.outputs.rc_tag }}
+          name: ${{ steps.prep.outputs.rc_tag }}
+          body_path: RC_NOTES.md
+          prerelease: true
+          generate_release_notes: false
