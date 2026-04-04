@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kikplate Helm Chart</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #292F3F;
+            --primary-light: #f5f7fa;
+            --accent: #ffffff;
+            --text-dark: #1a1d24;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --bg-light: #ffffff;
+            --bg-dark: #0f1419;
+            color-scheme: light dark;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text-dark: #f3f4f6;
+                --text-light: #d1d5db;
+                --border: #374151;
+                --bg-light: #1f2937;
+                --bg-dark: #111827;
+                --primary-light: #1e293b;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-dark) 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--bg-light);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 1.25rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-dark);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            min-height: 600px;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #4a5568 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-content p {
+            font-size: 1.25rem;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            line-height: 1.8;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.875rem 2rem;
+            border-radius: 0.5rem;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(41, 47, 63, 0.2);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: var(--accent);
+        }
+
+        .hero-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo-container {
+            width: 300px;
+            height: 300px;
+            background: rgba(41, 47, 63, 0.1);
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .logo-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Installation Section */
+        .installation {
+            background: var(--primary-light);
+            padding: 4rem 2rem;
+            margin: 4rem 0;
+        }
+
+        .installation .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            text-align: center;
+            color: var(--primary);
+        }
+
+        .installation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+        }
+
+        .install-card {
+            background: var(--bg-light);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .install-card h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .code-block {
+            background: var(--primary);
+            color: #e0e7ff;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 1rem 0;
+        }
+
+        .code-block code {
+            display: block;
+        }
+
+        .copy-btn {
+            background: var(--primary);
+            color: var(--accent);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            transition: opacity 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Features Section */
+        .features {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card h4 {
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        .feature-card p {
+            color: var(--text-light);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--bg-light);
+            border-top: 1px solid var(--border);
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+        }
+
+        footer .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero {
+                grid-template-columns: 1fr;
+                padding: 2rem 1rem;
+                min-height: auto;
+            }
+
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .installation-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <a href="#" class="logo">
+                <svg width="32" height="32" viewBox="0 0 265 265" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 32px; height: 32px;">
+                    <path d="M121.5 6.35085C128.307 2.42093 136.693 2.42093 143.5 6.35085L236.248 59.8991C243.055 63.8291 247.248 71.0919 247.248 78.9517V186.048C247.248 193.908 243.055 201.171 236.248 205.101L143.5 258.649C136.693 262.579 128.307 262.579 121.5 258.649L28.7516 205.101C21.9448 201.171 17.7516 193.908 17.7516 186.048V78.9517C17.7516 71.0919 21.9448 63.8291 28.7516 59.8991L121.5 6.35085Z" fill="currentColor"/>
+                    <path d="M200 159H66C70.8 178.6 87.3333 186.833 95 188.5H170C188 183.3 197.5 166.667 200 159Z" fill="#292F3F"/>
+                    <path d="M98.7969 97.4999C97.5969 92.6999 94.6302 86.6667 93.2969 85C100.297 85 106.797 88.502 108.297 97.002C109.957 106.411 102.797 112 100.297 124C98.2969 133.6 102.13 142 104.297 145C86.7969 140.5 91.4898 123.075 91.7969 122C92.7969 118.5 96.7969 111.5 96.7969 111C96.7969 110.5 100.297 103.5 98.7969 97.4999Z" fill="#292F3F"/>
+                </svg>
+                Kikplate Helm Chart
+            </a>
+            <ul class="nav-links">
+                <li><a href="#installation">Installation</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="https://github.com/MoeidHeidari/kikplate" target="_blank">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Kikplate Helm Chart</h1>
+            <p>Deploy Kikplate on Kubernetes with a single command. A production-ready Helm chart for managing self-hosted boilerplate templates.</p>
+            <div class="buttons">
+                <a href="#installation" class="btn btn-primary">
+                    Get Started
+                    <span>→</span>
+                </a>
+                <a href="https://github.com/MoeidHeidari/kikplate" target="_blank" class="btn btn-secondary">
+                    View on GitHub
+                </a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="logo-container">
+                <svg class="logo-svg" viewBox="0 0 265 265" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M121.5 6.35085C128.307 2.42093 136.693 2.42093 143.5 6.35085L236.248 59.8991C243.055 63.8291 247.248 71.0919 247.248 78.9517V186.048C247.248 193.908 243.055 201.171 236.248 205.101L143.5 258.649C136.693 262.579 128.307 262.579 121.5 258.649L28.7516 205.101C21.9448 201.171 17.7516 193.908 17.7516 186.048V78.9517C17.7516 71.0919 21.9448 63.8291 28.7516 59.8991L121.5 6.35085Z" fill="white"/>
+                    <path d="M200 159H66C70.8 178.6 87.3333 186.833 95 188.5H170C188 183.3 197.5 166.667 200 159Z" fill="#292F3F"/>
+                    <path d="M98.7969 97.4999C97.5969 92.6999 94.6302 86.6667 93.2969 85C100.297 85 106.797 88.502 108.297 97.002C109.957 106.411 102.797 112 100.297 124C98.2969 133.6 102.13 142 104.297 145C86.7969 140.5 91.4898 123.075 91.7969 122C92.7969 118.5 96.7969 111.5 96.7969 111C96.7969 110.5 100.297 103.5 98.7969 97.4999Z" fill="#292F3F"/>
+                    <path d="M163.797 97.4999C162.597 92.6999 159.63 86.6667 158.297 85C165.297 85 171.797 88.502 173.297 97.002C174.957 106.411 167.797 112 165.297 124C163.297 133.6 167.13 142 169.297 145C151.797 140.5 156.49 123.075 156.797 122C157.797 118.5 161.797 111.5 161.797 111C161.797 110.5 165.297 103.5 163.797 97.4999Z" fill="#292F3F"/>
+                    <path d="M131.222 82.4581C129.648 76.1381 125.759 68.1944 124.011 66C133.188 66 141.71 70.6109 143.676 81.8027C145.853 94.1909 136.466 101.55 133.188 117.35C130.566 129.99 135.592 141.05 138.432 145C115.49 139.075 121.642 116.132 122.045 114.717C123.356 110.108 128.6 100.892 128.6 100.233C128.6 99.575 133.188 90.3581 131.222 82.4581Z" fill="#292F3F"/>
+                </svg>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation Section -->
+    <section class="installation" id="installation">
+        <div class="container">
+            <h2 class="section-title">Quick Start</h2>
+            <div class="installation-grid">
+                <div class="install-card">
+                    <h3>1. Add the Helm Repository</h3>
+                    <p>Add the Kikplate Helm repository to your Helm configuration:</p>
+                    <div class="code-block">
+                        <code>helm repo add kikplate https://moeidheidari.github.io/kikplate/charts</code>
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">Then update your repositories:</p>
+                    <div class="code-block">
+                        <code>helm repo update</code>
+                    </div>
+                </div>
+
+                <div class="install-card">
+                    <h3>2. Install the Chart</h3>
+                    <p>Install Kikplate into your Kubernetes cluster:</p>
+                    <div class="code-block">
+                        <code>helm install kikplate kikplate/kikplate \
+  --namespace kikplate \
+  --create-namespace</code>
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 1rem;">Customize the installation with your own values:</p>
+                    <div class="code-block">
+                        <code>helm install kikplate kikplate/kikplate \
+  -f values.yaml \
+  --namespace kikplate</code>
+                    </div>
+                </div>
+
+                <div class="install-card">
+                    <h3>3. Configure Secrets</h3>
+                    <p>Set your OAuth provider credentials and other secrets:</p>
+                    <div class="code-block">
+                        <code>helm install kikplate kikplate/kikplate \
+  --set secrets.jwtSecret=YOUR_JWT_SECRET \
+  --set secrets.sso.githubClientSecret=YOUR_GITHUB_SECRET</code>
+                    </div>
+                </div>
+
+                <div class="install-card">
+                    <h3>4. Access the Application</h3>
+                    <p>Port forward to access the application locally:</p>
+                    <div class="code-block">
+                        <code>kubectl port-forward -n kikplate \
+  svc/web 3000:3000</code>
+                    </div>
+                    <p style="margin-top: 1rem;">Then visit <code>http://localhost:3000</code></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <h2 class="section-title">Features</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <h4>🚀 Production Ready</h4>
+                <p>Fully configured with health checks, resource limits, and best practices for Kubernetes deployments.</p>
+            </div>
+            <div class="feature-card">
+                <h4>🔐 Security First</h4>
+                <p>Secrets management, environment variable configuration, and secure credential handling out of the box.</p>
+            </div>
+            <div class="feature-card">
+                <h4>🔧 Highly Customizable</h4>
+                <p>Flexible configuration through <code>values.yaml</code> for all deployment parameters and application settings.</p>
+            </div>
+            <div class="feature-card">
+                <h4>💾 Database Included</h4>
+                <p>Includes PostgreSQL with persistent volumes for reliable data storage in Kubernetes.</p>
+            </div>
+            <div class="feature-card">
+                <h4>🌐 Multi-Component</h4>
+                <p>Manages API, Web, Sync worker, PostgreSQL, and supporting services in a single helm install.</p>
+            </div>
+            <div class="feature-card">
+                <h4>📊 Monitoring Ready</h4>
+                <p>Built-in liveness and readiness probes for automatic pod health monitoring and recovery.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Values Example Section -->
+    <section class="installation" style="margin-bottom: 0;">
+        <div class="container">
+            <h2 class="section-title">Configuration</h2>
+            <p style="text-align: center; margin-bottom: 2rem; color: var(--text-light);">
+                View <a href="https://github.com/MoeidHeidari/kikplate/blob/helm/helm/values.yaml" target="_blank" style="color: var(--primary);">values.yaml</a> 
+                for all configurable options, or explore the 
+                <a href="https://github.com/MoeidHeidari/kikplate/tree/helm/helm" target="_blank" style="color: var(--primary);">Helm chart source</a>.
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div>
+                <h4>Kikplate</h4>
+                <p style="color: var(--text-light); margin-top: 0.5rem;">The home of your starter boilerplates</p>
+                <div style="margin-top: 1rem;">
+                    <a href="https://github.com/MoeidHeidari/kikplate" target="_blank">GitHub</a>
+                </div>
+            </div>
+            <div>
+                <h4>Resources</h4>
+                <ul style="list-style: none;">
+                    <li><a href="https://helm.sh/docs/" target="_blank">Helm Documentation</a></li>
+                    <li><a href="https://kubernetes.io/" target="_blank">Kubernetes Docs</a></li>
+                    <li><a href="https://github.com/MoeidHeidari/kikplate/blob/main/docs/database.md" target="_blank">Database Guide</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Community</h4>
+                <ul style="list-style: none;">
+                    <li><a href="https://github.com/MoeidHeidari/kikplate/issues" target="_blank">Report Issues</a></li>
+                    <li><a href="https://github.com/MoeidHeidari/kikplate/discussions" target="_blank">Discussions</a></li>
+                    <li><a href="https://github.com/MoeidHeidari/kikplate/blob/main/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+                </ul>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--text-light);">
+            <p>&copy; 2024 Kikplate. Released under the MIT License.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Copy to clipboard functionality
+        const codeBlocks = document.querySelectorAll('.code-block');
+        codeBlocks.forEach(block => {
+            const code = block.querySelector('code').textContent;
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.textContent = 'Copy';
+            btn.onclick = () => {
+                navigator.clipboard.writeText(code);
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                }, 2000);
+            };
+            block.parentElement.insertBefore(btn, block.nextSibling);
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -28,13 +28,17 @@ jobs:
 
       - name: Package chart
         run: |
-          mkdir -p ./dist
-          helm package helm/ --destination ./dist
+          mkdir -p ./dist/charts
+          helm package helm/ --destination ./dist/charts
 
       - name: Generate index.yaml
         run: |
-          helm repo index ./dist \
-            --url https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+          helm repo index ./dist/charts \
+            --url https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/charts
+
+      - name: Copy landing page
+        run: |
+          cp helm/index.html ./dist/index.html
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
