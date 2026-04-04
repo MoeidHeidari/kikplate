@@ -65,13 +65,14 @@ jobs:
 
       - name: Package chart
         run: |
-          mkdir -p ./dist
-          helm package helm/ --destination ./dist
+          mkdir -p ./charts
+          helm package helm/ --destination ./charts
 
       - name: Copy landing page and metadata
         run: |
-          [ -f helm/index.html ] && cp helm/index.html ./dist/index.html || true
-          [ -f helm/artifacthub-repo.yml ] && cp helm/artifacthub-repo.yml ./dist/artifacthub-repo.yml || true
+          mkdir -p ./charts
+          [ -f helm/index.html ] && cp helm/index.html ./charts/index.html || true
+          [ -f helm/artifacthub-repo.yml ] && cp helm/artifacthub-repo.yml ./charts/artifacthub-repo.yml || true
 
       - name: Log in to GHCR
         run: |
@@ -82,7 +83,7 @@ jobs:
       - name: Push chart to OCI registry
         run: |
           owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          helm push ./dist/kikplate-${{ steps.version.outputs.chart_version }}.tgz \
+          helm push ./charts/kikplate-${{ steps.version.outputs.chart_version }}.tgz \
             oci://ghcr.io/${owner}/helm-charts
 
       - name: Create release notes
@@ -126,7 +127,7 @@ jobs:
           tag_name: helm-v${{ steps.version.outputs.chart_version }}
           name: Helm Chart v${{ steps.version.outputs.chart_version }}
           body_path: /tmp/release_notes.md
-          files: ./dist/kikplate-${{ steps.version.outputs.chart_version }}.tgz
+          files: ./charts/kikplate-${{ steps.version.outputs.chart_version }}.tgz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -141,10 +142,10 @@ jobs:
       - name: Copy chart to gh-pages
         if: github.event_name == 'workflow_dispatch'
         run: |
-          mkdir -p gh-pages
-          cp ./dist/kikplate-${{ steps.version.outputs.chart_version }}.tgz gh-pages/
-          [ -f ./dist/index.html ] && cp ./dist/index.html gh-pages/index.html || true
-          [ -f ./dist/artifacthub-repo.yml ] && cp ./dist/artifacthub-repo.yml gh-pages/artifacthub-repo.yml || true
+          mkdir -p gh-pages/charts
+          cp ./charts/kikplate-${{ steps.version.outputs.chart_version }}.tgz gh-pages/charts/
+          [ -f ./charts/index.html ] && cp ./charts/index.html gh-pages/index.html || true
+          [ -f ./charts/artifacthub-repo.yml ] && cp ./charts/artifacthub-repo.yml gh-pages/artifacthub-repo.yml || true
 
       - name: Commit and push to gh-pages
         if: github.event_name == 'workflow_dispatch'

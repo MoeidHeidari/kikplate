@@ -275,12 +275,13 @@
             right: 0.5rem;
             background: var(--primary-foreground);
             color: var(--primary);
-            border: none;
+                border: 1px solid var(--border);
             padding: 0.3rem 0.6rem;
             font-size: 0.75rem;
             cursor: pointer;
             opacity: 0.7;
             transition: opacity 0.2s;
+                border-radius: 0;
         }
 
         .code-copy:hover {
@@ -444,66 +445,30 @@
     <section class="section" id="install">
         <div class="container">
             <h2 class="section-title">Installation</h2>
-            <div class="grid">
-                <div class="card">
-                    <h3>1. Login to GHCR</h3>
-                    <p>Authenticate with GitHub Container Registry:</p>
-                    <div class="code-block">
-                        <code>helm registry login ghcr.io -u moeidheidari -p YOUR_GITHUB_TOKEN</code>
-                    </div>
-                    <p style="font-size: 0.9rem; color: var(--muted-foreground);">
-                        <a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" target="_blank">Generate a Personal Access Token →</a>
-                    </p>
+                <h3>Login to GHCR</h3>
+                <div class="code-block">
+                    <code>helm registry login ghcr.io -u moeidheidari -p YOUR_GITHUB_TOKEN</code>
                 </div>
 
-                <div class="card">
-                    <h3>2. Add Repository</h3>
-                    <p>Add the Kikplate Helm repository:</p>
-                    <div class="code-block">
-                        <code>helm repo add kikplate oci://ghcr.io/moeidheidari/helm-charts</code>
-                    </div>
+                <h3>Add Repository</h3>
+                <div class="code-block">
+                    <code>helm repo add kikplate oci://ghcr.io/moeidheidari/helm-charts</code>
                 </div>
 
-                <div class="card">
-                    <h3>3. Find Versions</h3>
-                    <p>List all available chart versions:</p>
-                    <div class="code-block">
-                        <code>helm search repo kikplate --versions</code>
-                    </div>
+                <h3>Install Chart</h3>
+                <div class="code-block">
+                    <code>helm install kikplate kikplate/kikplate \
+      --namespace kikplate \
+      --create-namespace</code>
                 </div>
 
-                <div class="card">
-                    <h3>4. Install Chart</h3>
-                    <p>Deploy Kikplate to your cluster:</p>
-                    <div class="code-block">
-                        <code>helm install kikplate kikplate/kikplate \
-  --version 0.1.0 \
-  --namespace kikplate \
-  --create-namespace</code>
-                    </div>
+                <h3>Configure Credentials</h3>
+                <div class="code-block">
+                    <code>helm install kikplate kikplate/kikplate \
+      --set secrets.jwtSecret=$(openssl rand -base64 32) \
+      --set secrets.sso.githubClientSecret=YOUR_GITHUB_SECRET \
+      --namespace kikplate</code>
                 </div>
-
-                <div class="card">
-                    <h3>5. Configure Credentials</h3>
-                    <p>Set OAuth provider secrets and JWT:</p>
-                    <div class="code-block">
-                        <code>helm install kikplate kikplate/kikplate \
-  --set secrets.jwtSecret=$(openssl rand -base64 32) \
-  --set secrets.sso.githubClientSecret=Ov23lid5LSBSn2mplIvf \
-  --namespace kikplate</code>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h3>6. Verify Deployment</h3>
-                    <p>Check pod status and test access:</p>
-                    <div class="code-block">
-                        <code>kubectl get pods -n kikplate
-kubectl port-forward -n kikplate svc/web 3000:3000</code>
-                    </div>
-                    <p style="font-size: 0.9rem; color: var(--muted-foreground);">Visit http://localhost:3000</p>
-                </div>
-            </div>
 
             <div class="note">
                 <strong>Need more options?</strong> View the complete <a href="https://github.com/MoeidHeidari/kikplate/blob/helm/helm/values.yaml" target="_blank">values.yaml</a> for all configuration options.
