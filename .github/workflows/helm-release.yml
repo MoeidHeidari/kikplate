@@ -1,162 +1,177 @@
-name: Release Helm Chart
+name: Helm Chart Release
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Chart version to release (e.g., 0.1.0, 0.2.0)'
+        description: 'Version to publish. Must match an existing GitHub release (e.g. 1.2.3 or v1.2.3)'
         required: true
         type: string
-      app_version:
-        description: 'App version tag (image tag from GHCR)'
-        required: true
-        type: string
-  push:
-    branches:
-      - helm
-    paths:
-      - "helm/**"
 
 permissions:
   contents: write
   packages: write
 
 jobs:
-  release:
-    name: Package & Publish to OCI Registry
+  validate-version:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+      tag: ${{ steps.validate.outputs.tag }}
     steps:
-      - name: Checkout
+      - name: Validate version against existing releases
+        id: validate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          VERSION="$INPUT_VERSION"
+
+          if [ -z "$VERSION" ]; then
+            echo "::error::No version provided."
+            exit 1
+          fi
+
+          CLEAN_VERSION="${VERSION#v}"
+          TAG="v${CLEAN_VERSION}"
+
+          RELEASES=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName --jq '.[].tagName' 2>&1) || {
+            echo "::error::Failed to fetch releases. Ensure the repository has at least one published release."
+            exit 1
+          }
+
+          if [ -z "$RELEASES" ]; then
+            echo "::error::No releases found in this repository. Create an application release first before publishing a Helm chart."
+            exit 1
+          fi
+
+          MATCH_FOUND=false
+          while IFS= read -r release_tag; do
+            if [ "$release_tag" = "$TAG" ] || [ "$release_tag" = "$CLEAN_VERSION" ]; then
+              MATCH_FOUND=true
+              break
+            fi
+          done <<< "$RELEASES"
+
+          if [ "$MATCH_FOUND" = false ]; then
+            echo "::error::Version '${INPUT_VERSION}' does not match any existing release."
+            echo "Available versions:"
+            echo "$RELEASES" | sort -rV | head -20
+            exit 1
+          fi
+
+          echo "version=$CLEAN_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Validated: version=$CLEAN_VERSION tag=$TAG"
+
+  test:
+    runs-on: ubuntu-latest
+    needs: validate-version
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.13.0'
+
+      - name: Run Helm checks
+        run: |
+          helm lint helm/
+          helm template test helm/ \
+            --set secrets.jwtSecret=test-jwt-secret \
+            --set secrets.sso.githubClientSecret=test-github-secret > /dev/null
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [validate-version, test]
+    steps:
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install Helm
-        uses: azure/setup-helm@v4
-        with:
-          version: latest
-
-      - name: Determine version and app_version
-        id: version
+      - name: Configure Git
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            CHART_VERSION="${{ inputs.version }}"
-            APP_VERSION="${{ inputs.app_version }}"
-          else
-            # For push events, use semantic version from git tag or default
-            CHART_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.1.0")
-            APP_VERSION="main"
-          fi
-          
-          echo "chart_version=${CHART_VERSION}" >> "${GITHUB_OUTPUT}"
-          echo "app_version=${APP_VERSION}" >> "${GITHUB_OUTPUT}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.13.0'
 
       - name: Update Chart.yaml with version
+        env:
+          VERSION: ${{ needs.validate-version.outputs.version }}
+          TAG: ${{ needs.validate-version.outputs.tag }}
         run: |
-          sed -i "s/version: .*/version: ${{ steps.version.outputs.chart_version }}/" helm/Chart.yaml
-          sed -i "s/appVersion: .*/appVersion: \"${{ steps.version.outputs.app_version }}\"/" helm/Chart.yaml
+          sed -i "s/^version:.*/version: $VERSION/" helm/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"$TAG\"/" helm/Chart.yaml
+          echo "Updated helm/Chart.yaml to version $VERSION (appVersion: $TAG):"
+          cat helm/Chart.yaml
 
-      - name: Update values.yaml with image tags
-        run: |
-          sed -i "s/tag: .*/tag: ${{ steps.version.outputs.app_version }}/" helm/values.yaml
-
-      - name: Verify Chart
-        run: helm lint helm/
-
-      - name: Package chart
+      - name: Package Helm chart
         run: |
           mkdir -p ./charts
           helm package helm/ --destination ./charts
+          ls -la ./charts/
 
-      - name: Copy landing page and metadata
-        run: |
-          mkdir -p ./charts
-          [ -f helm/index.html ] && cp helm/index.html ./charts/index.html || true
-          [ -f helm/artifacthub-repo.yml ] && cp helm/artifacthub-repo.yml ./charts/artifacthub-repo.yml || true
-
-      - name: Log in to GHCR
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
-            --username ${{ github.actor }} \
-            --password-stdin
-
-      - name: Push chart to OCI registry
+      - name: Push chart to GHCR OCI registry
+        env:
+          VERSION: ${{ needs.validate-version.outputs.version }}
         run: |
           owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          helm push ./charts/kikplate-${{ steps.version.outputs.chart_version }}.tgz \
-            oci://ghcr.io/${owner}/helm-charts
-
-      - name: Create release notes
-        id: release_notes
-        run: |
-          cat > /tmp/release_notes.md << 'EOF'
-          # Kikplate Helm Chart v${{ steps.version.outputs.chart_version }}
-
-          **Chart Version:** ${{ steps.version.outputs.chart_version }}  
-          **App Version:** ${{ steps.version.outputs.app_version }}
-
-          ## Installation
-
-          Add the OCI repository:
-          \`\`\`bash
-          helm registry login ghcr.io -u <username> -p <token>
-          helm repo add kikplate oci://ghcr.io/${{ github.repository_owner }}/helm-charts
-          \`\`\`
-
-          Install the chart:
-          \`\`\`bash
-          helm install kikplate kikplate/kikplate \
-            --version ${{ steps.version.outputs.chart_version }} \
-            --namespace kikplate \
-            --create-namespace
-          \`\`\`
-
-          ## What's Changed
-
-          - Updated application images to `${{ steps.version.outputs.app_version }}`
-          - Chart version bumped to `${{ steps.version.outputs.chart_version }}`
-
-          For full changelog, visit the [repository](https://github.com/${{ github.repository }}).
-          EOF
-          cat /tmp/release_notes.md
-
-      - name: Create GitHub Release
-        if: github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: helm-v${{ steps.version.outputs.chart_version }}
-          name: Helm Chart v${{ steps.version.outputs.chart_version }}
-          body_path: /tmp/release_notes.md
-          files: ./charts/kikplate-${{ steps.version.outputs.chart_version }}.tgz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
+          helm push ./charts/kikplate-${VERSION}.tgz oci://ghcr.io/${owner}/helm-charts
 
       - name: Checkout gh-pages branch
-        if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v4
         with:
           ref: gh-pages
           path: gh-pages
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
-      - name: Copy chart to gh-pages
-        if: github.event_name == 'workflow_dispatch'
+      - name: Initialize gh-pages if empty
+        run: |
+          if [ ! -f gh-pages/index.yaml ]; then
+            echo "Initializing gh-pages branch"
+            cd gh-pages
+            echo "apiVersion: v1" > index.yaml
+            echo "entries: {}" >> index.yaml
+            mkdir -p charts
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add index.yaml
+            git commit -m "Initial Helm chart repository" || true
+            git push origin gh-pages || true
+          fi
+
+      - name: Copy chart and repository metadata
         run: |
           mkdir -p gh-pages/charts
-          cp ./charts/kikplate-${{ steps.version.outputs.chart_version }}.tgz gh-pages/charts/
-          [ -f ./charts/index.html ] && cp ./charts/index.html gh-pages/index.html || true
-          [ -f ./charts/artifacthub-repo.yml ] && cp ./charts/artifacthub-repo.yml gh-pages/artifacthub-repo.yml || true
+          cp charts/*.tgz gh-pages/charts/
+          [ -f helm/index.html ] && cp helm/index.html gh-pages/index.html || true
+          [ -f helm/artifacthub-repo.yml ] && cp helm/artifacthub-repo.yml gh-pages/artifacthub-repo.yml || true
+
+      - name: Update Helm repository index
+        run: |
+          cd gh-pages/charts
+          helm repo index . --url https://moeidheidari.github.io/kikplate/charts
 
       - name: Commit and push to gh-pages
-        if: github.event_name == 'workflow_dispatch'
         run: |
           cd gh-pages
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull origin gh-pages --rebase || git pull origin gh-pages --no-rebase || true
+          git checkout gh-pages || git checkout -b gh-pages
           git add .
-          if git diff --staged --quiet; then
+          if git diff --staged --quiet && git diff --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update Helm chart to version ${{ steps.version.outputs.chart_version }}"
-            git push origin gh-pages
+            git commit -m "Update Helm chart to version ${{ needs.validate-version.outputs.version }}"
+            git push origin gh-pages || git push origin gh-pages --force-with-lease
           fi
