@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: {{ include "kikplate.namespace" . }}
+  labels:
+    {{- include "kikplate.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.web.replicaCount }}
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: "{{ .Values.web.image.repository }}:{{ .Values.web.image.tag }}"
+          imagePullPolicy: {{ .Values.web.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.web.service.port }}
+              name: http
+          env:
+            - name: API_INTERNAL_URL
+              value: "http://api:{{ .Values.api.service.port }}"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: {{ .Values.web.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.web.readinessProbe.periodSeconds }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: {{ .Values.web.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.web.livenessProbe.periodSeconds }}
+          resources:
+            {{- toYaml .Values.web.resources | nindent 12 }}

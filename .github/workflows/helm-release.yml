@@ -1,0 +1,46 @@
+name: Release Helm Chart
+name: Release Helm Chart
+
+on:
+  push:
+    branches:
+      - helm
+    paths:
+      - "helm/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Package & Publish to GitHub Pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: latest
+
+      - name: Package chart
+        run: |
+          mkdir -p ./dist
+          helm package helm/ --destination ./dist
+
+      - name: Generate index.yaml
+        run: |
+          helm repo index ./dist \
+            --url https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          keep_files: true
+          commit_message: "chore: update helm chart index [skip ci]"

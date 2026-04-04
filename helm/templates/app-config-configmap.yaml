@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: {{ include "kikplate.namespace" . }}
+  labels:
+    {{- include "kikplate.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    database:
+      host: postgres
+      port: {{ .Values.postgres.service.port }}
+      database: {{ .Values.postgresql.database }}
+
+    server:
+      port: {{ .Values.config.server.port }}
+      frontend_url: {{ .Values.config.server.frontendUrl }}
+      log:
+        level: {{ .Values.config.server.log.level }}
+
+    sync:
+      interval: {{ .Values.config.sync.interval }}
+      poll_interval: {{ .Values.config.sync.pollInterval }}
+      batch_size: {{ .Values.config.sync.batchSize }}
+
+    sso:
+      providers:
+        {{- range .Values.config.sso.providers }}
+        - name: {{ .name }}
+          client_id: {{ .clientId }}
+          redirect_url: {{ .redirectUrl }}
+          scopes:
+            {{- range .scopes }}
+            - {{ . }}
+            {{- end }}
+        {{- end }}
+
+    customization:
+      logo: {{ .Values.config.customization.logo }}
+      banner_title: {{ .Values.config.customization.bannerTitle }}
+      badge_request_url: {{ .Values.config.customization.badgeRequestUrl }}
+      social_media:
+        {{- range .Values.config.customization.socialMedia }}
+        - type: {{ .type }}
+          link: {{ .link }}
+        {{- end }}
+      prepared_queries:
+        {{- range .Values.config.customization.preparedQueries }}
+        - {{ . | quote }}
+        {{- end }}
+
+    badges:
+      {{- range .Values.config.badges }}
+      - slug: {{ .slug }}
+        name: {{ .name }}
+        description: {{ .description }}
+        icon: {{ .icon }}
+        tier: {{ .tier }}
+      {{- end }}
