@@ -3,521 +3,607 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kikplate Helm Chart</title>
+    <title>Kikplate Helm Charts</title>
+    <meta name="description" content="Official Helm distribution for Kikplate.">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         :root {
+            --background: oklch(1 0 0);
+            --foreground: oklch(0.145 0 0);
+            --card: oklch(1 0 0);
+            --card-foreground: oklch(0.145 0 0);
+            --popover: oklch(1 0 0);
+            --popover-foreground: oklch(0.145 0 0);
             --primary: oklch(0.205 0 0);
             --primary-foreground: oklch(0.985 0 0);
-            --foreground: oklch(0.145 0 0);
-            --background: oklch(1 0 0);
+            --secondary: oklch(0.97 0 0);
+            --secondary-foreground: oklch(0.205 0 0);
+            --muted: oklch(0.97 0 0);
             --muted-foreground: oklch(0.556 0 0);
+            --accent: oklch(0.97 0 0);
+            --accent-foreground: oklch(0.205 0 0);
             --border: oklch(0.922 0 0);
-            --card: oklch(1 0 0);
+            --input: oklch(0.922 0 0);
+            --ring: oklch(0.708 0 0);
+            --radius: 0.25rem;
             color-scheme: light dark;
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                --foreground: oklch(0.985 0 0);
                 --background: oklch(0.22 0.02 250);
+                --foreground: oklch(0.985 0 0);
                 --card: oklch(0.25 0.02 250);
-                --muted-foreground: oklch(0.708 0 0);
-                --border: oklch(1 0 0 / 10%);
+                --card-foreground: oklch(0.985 0 0);
+                --popover: oklch(0.25 0.02 250);
+                --popover-foreground: oklch(0.985 0 0);
                 --primary: oklch(0.922 0 0);
                 --primary-foreground: oklch(0.205 0 0);
+                --secondary: oklch(0.269 0 0);
+                --secondary-foreground: oklch(0.985 0 0);
+                --muted: oklch(0.269 0 0);
+                --muted-foreground: oklch(0.708 0 0);
+                --accent: oklch(0.269 0 0);
+                --accent-foreground: oklch(0.985 0 0);
+                --border: oklch(1 0 0 / 10%);
+                --input: oklch(1 0 0 / 15%);
+                --ring: oklch(0.556 0 0);
             }
         }
 
-        html, body {
-            color-scheme: light dark;
+        * {
+            box-sizing: border-box;
+            border-color: var(--border);
+        }
+
+        html {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            color: var(--foreground);
+            margin: 0;
             background: var(--background);
+            color: var(--foreground);
             min-height: 100vh;
-            line-height: 1.6;
         }
 
         a {
-            color: var(--primary);
+            color: inherit;
             text-decoration: none;
         }
 
-        a:hover {
-            text-decoration: underline;
+        button,
+        input,
+        select,
+        textarea {
+            border-radius: 0;
         }
 
-        code {
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
+        code,
+        pre {
+            font-family: "SFMono-Regular", SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
         }
 
-        /* Navigation */
-        nav {
-            background: var(--primary);
-            color: var(--primary-foreground);
-            padding: 1rem 0;
+        .container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .topbar {
             position: sticky;
             top: 0;
-            z-index: 100;
-            border-bottom: 1px solid var(--border);
-        }
-
-        nav .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 60px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-weight: 600;
+            z-index: 40;
+            background: var(--primary);
             color: var(--primary-foreground);
-            text-decoration: none;
-            font-size: 1.1rem;
-            cursor: pointer;
         }
 
-        .logo:hover {
-            text-decoration: none;
-            opacity: 0.9;
-        }
-
-        .logo svg {
-            width: 32px;
-            height: 32px;
-        }
-
-        .nav-links {
+        .topbar-inner {
             display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--primary-foreground);
-            text-decoration: none;
-            transition: opacity 0.2s;
-        }
-
-        .nav-links a:hover {
-            text-decoration: none;
-            opacity: 0.8;
-        }
-
-        /* Main Container */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        /* Hero Section */
-        .hero {
-            padding: 4rem 2rem;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
             align-items: center;
-        }
-
-        .hero-content h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: var(--foreground);
-            line-height: 1.2;
-        }
-
-        .hero-content p {
-            font-size: 1.1rem;
-            color: var(--muted-foreground);
-            margin-bottom: 2rem;
-            line-height: 1.6;
-        }
-
-        .buttons {
-            display: flex;
             gap: 1rem;
-            flex-wrap: wrap;
+            min-height: 5rem;
         }
 
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: 1px solid var(--border);
-            border-radius: 0;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s;
+        .brand {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            cursor: default;
+            flex-shrink: 0;
         }
 
-        .btn-primary {
-            background: var(--primary);
-            color: var(--primary-foreground);
-            border-color: var(--primary);
+        .brand img,
+        .brand svg {
+            width: 40px;
+            height: 40px;
+            display: block;
         }
 
-        .btn-primary:hover {
-            opacity: 0.9;
-            text-decoration: none;
+        .brand-text {
+            font-size: 1.25rem;
+            letter-spacing: -0.03em;
+            color: white;
         }
 
-        .btn-secondary {
-            background: transparent;
-            color: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .btn-secondary:hover {
-            background: var(--primary);
-            color: var(--primary-foreground);
-            text-decoration: none;
-        }
-
-        .hero-logo {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .logo-box {
-            width: 280px;
-            height: 280px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-
-        .logo-box svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Installation Section */
-        .section {
-            padding: 4rem 2rem;
-            border-top: 1px solid var(--border);
-        }
-
-        .section-title {
-            font-size: 2rem;
+        .brand-text strong {
             font-weight: 700;
-            margin-bottom: 2rem;
-            color: var(--foreground);
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
+        .nav-links {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: rgb(255 255 255 / 0.6);
         }
 
-        .card {
-            background: var(--card);
+        .nav-links a:hover {
+            color: white;
+        }
+
+        .divider {
+            width: 1px;
+            height: 1rem;
+            background: rgb(255 255 255 / 0.1);
+        }
+
+        .hero {
+            min-height: calc(100vh - 12rem);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 0 3rem;
+        }
+
+        .hero-inner {
+            width: 100%;
+            max-width: 72rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            text-align: center;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
             border: 1px solid var(--border);
-            padding: 2rem;
-        }
-
-        .card h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--foreground);
-        }
-
-        .card p {
-            font-size: 0.95rem;
+            background: color-mix(in oklab, var(--muted) 40%, transparent);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
             color: var(--muted-foreground);
-            margin-bottom: 1rem;
         }
 
-        .code-block {
+        h1 {
+            margin: 0;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            line-height: 1.05;
+            letter-spacing: -0.04em;
+            font-weight: 700;
+        }
+
+        .hero-copy {
+            max-width: 42rem;
+            font-size: 1rem;
+            line-height: 1.75;
+            color: var(--muted-foreground);
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 2.75rem;
+            padding: 0 1.25rem;
+            border: 1px solid var(--border);
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        }
+
+        .button-primary {
+            border-color: color-mix(in oklab, var(--primary) 90%, transparent);
             background: var(--primary);
             color: var(--primary-foreground);
+        }
+
+        .button-primary:hover {
+            opacity: 0.92;
+        }
+
+        .button-secondary {
+            background: var(--background);
+            color: var(--foreground);
+        }
+
+        .button-secondary:hover {
+            border-color: color-mix(in oklab, var(--primary) 40%, var(--border));
+            background: var(--muted);
+        }
+
+        .command-panel {
+            width: 100%;
+            margin-top: 0.75rem;
+            border: 1px solid var(--border);
+            background: var(--card);
+            text-align: left;
+        }
+
+        .command-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: color-mix(in oklab, var(--muted) 30%, transparent);
+        }
+
+        .command-panel-header h2 {
+            margin: 0;
+            font-size: 0.875rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted-foreground);
+        }
+
+        .copy-button {
+            border: 1px solid var(--border);
+            background: var(--background);
+            color: var(--foreground);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+        }
+
+        .copy-button:hover {
+            background: var(--muted);
+        }
+
+        .command-panel pre {
+            margin: 0;
+            padding: 1.25rem;
+            overflow-x: auto;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--foreground);
+            background: var(--card);
+        }
+
+        .section {
+            padding: 0 0 5rem;
+        }
+
+        .section-block {
+            border: 1px solid var(--border);
+            background: var(--card);
+        }
+
+        .section-block + .section-block {
+            border-top: 0;
+        }
+
+        .section-row {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-row:last-child {
+            border-bottom: 0;
+        }
+
+        .section-row h3 {
+            margin: 0 0 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .section-row p {
+            margin: 0 0 1rem;
+            color: var(--muted-foreground);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .inline-code {
+            display: block;
+            border: 1px solid var(--border);
+            background: color-mix(in oklab, var(--muted) 35%, transparent);
             padding: 1rem;
             overflow-x: auto;
-            font-size: 0.85rem;
-            line-height: 1.5;
-            margin: 1rem 0;
-            position: relative;
+            white-space: pre;
+            font-size: 0.875rem;
+            line-height: 1.7;
         }
 
-        .code-block code {
-            display: block;
-            font-family: 'Courier New', monospace;
-        }
-
-        .code-copy {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            background: var(--primary-foreground);
-            color: var(--primary);
-                border: 1px solid var(--border);
-            padding: 0.3rem 0.6rem;
-            font-size: 0.75rem;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-                border-radius: 0;
-        }
-
-        .code-copy:hover {
-            opacity: 1;
-        }
-
-        .note {
-            background: var(--card);
-            border-left: 3px solid var(--primary);
-            padding: 1rem;
-            margin: 1rem 0;
-            font-size: 0.9rem;
-            color: var(--muted-foreground);
-        }
-
-        /* Footer */
-        footer {
-            background: var(--card);
-            border-top: 1px solid var(--border);
-            padding: 3rem 2rem;
-            margin-top: 4rem;
-        }
-
-        footer .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        footer-content {
+        .meta-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        footer h4 {
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--foreground);
-            font-size: 0.95rem;
-        }
-
-        footer a {
-            display: block;
-            font-size: 0.9rem;
-            color: var(--muted-foreground);
-            margin-bottom: 0.5rem;
-            transition: color 0.2s;
-        }
-
-        footer a:hover {
-            color: var(--foreground);
-            text-decoration: underline;
-        }
-
-        footer-bottom {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             border-top: 1px solid var(--border);
-            padding-top: 2rem;
-            text-align: center;
-            color: var(--muted-foreground);
-            font-size: 0.85rem;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hero {
+        .meta-item {
+            padding: 1.25rem 1.5rem;
+            border-right: 1px solid var(--border);
+        }
+
+        .meta-item:last-child {
+            border-right: 0;
+        }
+
+        .meta-label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted-foreground);
+        }
+
+        .meta-value {
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .meta-value a {
+            text-decoration: underline;
+            text-underline-offset: 0.2em;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            background: var(--background);
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 2rem;
+            padding: 3rem 0;
+        }
+
+        .footer-title {
+            margin: 0 0 0.75rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted-foreground);
+        }
+
+        .footer-copy,
+        .footer-links a,
+        .footer-links div {
+            font-size: 0.8125rem;
+            line-height: 1.8;
+            color: var(--muted-foreground);
+        }
+
+        .footer-links a:hover {
+            color: var(--foreground);
+        }
+
+        .footer-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1.5rem 0 2rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+        }
+
+        @media (max-width: 900px) {
+            .meta-grid,
+            .footer-grid {
                 grid-template-columns: 1fr;
-                gap: 2rem;
-                padding: 2rem 1rem;
             }
 
-            .hero-content h1 {
-                font-size: 1.75rem;
+            .meta-item {
+                border-right: 0;
+                border-bottom: 1px solid var(--border);
             }
 
-            .hero-content p {
+            .meta-item:last-child {
+                border-bottom: 0;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .topbar-inner {
+                min-height: 4.5rem;
+            }
+
+            .brand-text {
                 font-size: 1rem;
             }
 
-            .logo-box {
-                width: 200px;
-                height: 200px;
-            }
-
             .nav-links {
-                gap: 1rem;
+                gap: 0.75rem;
+                font-size: 0.8rem;
             }
 
-            nav .container {
-                padding: 0 1rem;
+            .hero {
+                min-height: auto;
+                padding: 3rem 0 2rem;
             }
 
-            .buttons {
+            .hero-actions,
+            .footer-bottom {
                 flex-direction: column;
+                align-items: flex-start;
             }
 
-            .btn {
+            .button {
                 width: 100%;
-                justify-content: center;
             }
 
-            .section-title {
-                font-size: 1.5rem;
-            }
-
-            .grid {
-                grid-template-columns: 1fr;
-            }
-
-            footer-content {
-                grid-template-columns: 1fr;
+            .command-panel-header {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav>
-        <div class="container">
-            <a href="#" class="logo">
-                <svg viewBox="0 0 265 265" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M121.5 6.35085C128.307 2.42093 136.693 2.42093 143.5 6.35085L236.248 59.8991C243.055 63.8291 247.248 71.0919 247.248 78.9517V186.048C247.248 193.908 243.055 201.171 236.248 205.101L143.5 258.649C136.693 262.579 128.307 262.579 121.5 258.649L28.7516 205.101C21.9448 201.171 17.7516 193.908 17.7516 186.048V78.9517C17.7516 71.0919 21.9448 63.8291 28.7516 59.8991L121.5 6.35085Z" fill="currentColor"/>
-                    <path d="M200 159H66C70.8 178.6 87.3333 186.833 95 188.5H170C188 183.3 197.5 166.667 200 159Z" fill="#292F3F"/>
-                    <path d="M98.7969 97.4999C97.5969 92.6999 94.6302 86.6667 93.2969 85C100.297 85 106.797 88.502 108.297 97.002C109.957 106.411 102.797 112 100.297 124C98.2969 133.6 102.13 142 104.297 145C86.7969 140.5 91.4898 123.075 91.7969 122C92.7969 118.5 96.7969 111.5 96.7969 111C96.7969 110.5 100.297 103.5 98.7969 97.4999Z" fill="#292F3F"/>
-                </svg>
-                Kikplate Helm
-            </a>
-            <ul class="nav-links">
-                <li><a href="#install">Install</a></li>
-                <li><a href="https://github.com/MoeidHeidari/kikplate" target="_blank">GitHub</a></li>
-            </ul>
-        </div>
-    </nav>
-
-    <!-- Hero -->
-    <div class="hero container">
-        <div class="hero-content">
-            <h1>Deploy Kikplate on Kubernetes</h1>
-            <p>Production-ready Helm chart for self-hosted boilerplate templates. Install with a single command.</p>
-            <div class="buttons">
-                <a href="#install" class="btn btn-primary">Get Started</a>
-                <a href="https://github.com/MoeidHeidari/kikplate" target="_blank" class="btn btn-secondary">
-                    View on GitHub
-                </a>
-            </div>
-        </div>
-        <div class="hero-logo">
-            <div class="logo-box">
-                <svg viewBox="0 0 265 265" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <nav class="topbar">
+        <div class="container topbar-inner">
+            <div class="brand" aria-label="Kikplate">
+                <svg viewBox="0 0 265 265" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path d="M121.5 6.35085C128.307 2.42093 136.693 2.42093 143.5 6.35085L236.248 59.8991C243.055 63.8291 247.248 71.0919 247.248 78.9517V186.048C247.248 193.908 243.055 201.171 236.248 205.101L143.5 258.649C136.693 262.579 128.307 262.579 121.5 258.649L28.7516 205.101C21.9448 201.171 17.7516 193.908 17.7516 186.048V78.9517C17.7516 71.0919 21.9448 63.8291 28.7516 59.8991L121.5 6.35085Z" fill="white"/>
                     <path d="M200 159H66C70.8 178.6 87.3333 186.833 95 188.5H170C188 183.3 197.5 166.667 200 159Z" fill="#292F3F"/>
                     <path d="M98.7969 97.4999C97.5969 92.6999 94.6302 86.6667 93.2969 85C100.297 85 106.797 88.502 108.297 97.002C109.957 106.411 102.797 112 100.297 124C98.2969 133.6 102.13 142 104.297 145C86.7969 140.5 91.4898 123.075 91.7969 122C92.7969 118.5 96.7969 111.5 96.7969 111C96.7969 110.5 100.297 103.5 98.7969 97.4999Z" fill="#292F3F"/>
                     <path d="M163.797 97.4999C162.597 92.6999 159.63 86.6667 158.297 85C165.297 85 171.797 88.502 173.297 97.002C174.957 106.411 167.797 112 165.297 124C163.297 133.6 167.13 142 169.297 145C151.797 140.5 156.49 123.075 156.797 122C157.797 118.5 161.797 111.5 161.797 111C161.797 110.5 165.297 103.5 163.797 97.4999Z" fill="#292F3F"/>
                     <path d="M131.222 82.4581C129.648 76.1381 125.759 68.1944 124.011 66C133.188 66 141.71 70.6109 143.676 81.8027C145.853 94.1909 136.466 101.55 133.188 117.35C130.566 129.99 135.592 141.05 138.432 145C115.49 139.075 121.642 116.132 122.045 114.717C123.356 110.108 128.6 100.892 128.6 100.233C128.6 99.575 133.188 90.3581 131.222 82.4581Z" fill="#292F3F"/>
                 </svg>
+                <span class="brand-text">Kik<strong>Plate</strong></span>
+            </div>
+
+            <div class="nav-links">
+                <a href="#install">Install</a>
+                <a href="https://github.com/MoeidHeidari/kikplate/tree/helm/helm" target="_blank" rel="noopener noreferrer">Chart</a>
+                <div class="divider" aria-hidden="true"></div>
+                <a href="https://github.com/MoeidHeidari/kikplate" target="_blank" rel="noopener noreferrer">GitHub</a>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <!-- Installation -->
-    <section class="section" id="install">
-        <div class="container">
-            <h2 class="section-title">Installation</h2>
-                <h3>Login to GHCR</h3>
-                <div class="code-block">
-                    <code>helm registry login ghcr.io -u moeidheidari -p YOUR_GITHUB_TOKEN</code>
+    <main>
+        <section class="hero">
+            <div class="container hero-inner">
+                <div class="eyebrow">Helm distribution</div>
+                <h1>Deploy Kikplate with the same minimal surface as the app itself.</h1>
+                <p class="hero-copy">
+                    Official Helm packaging for Kikplate. Pull the chart from GHCR, install it into a namespace,
+                    and configure secrets through values overrides when you need them.
+                </p>
+
+                <div class="hero-actions">
+                    <a class="button button-primary" href="#install">Get started</a>
+                    <a class="button button-secondary" href="index.yaml">Open index.yaml</a>
                 </div>
 
-                <h3>Add Repository</h3>
-                <div class="code-block">
-                    <code>helm repo add kikplate oci://ghcr.io/moeidheidari/helm-charts</code>
+                <div class="command-panel" aria-label="Quick install command">
+                    <div class="command-panel-header">
+                        <h2>Quick Install</h2>
+                        <button class="copy-button" type="button" data-copy-target="quick-install">Copy</button>
+                    </div>
+                    <pre id="quick-install">helm install kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
+  --namespace kikplate \
+  --create-namespace</pre>
                 </div>
-
-                <h3>Install Chart</h3>
-                <div class="code-block">
-                    <code>helm install kikplate kikplate/kikplate \
-      --namespace kikplate \
-      --create-namespace</code>
-                </div>
-
-                <h3>Configure Credentials</h3>
-                <div class="code-block">
-                    <code>helm install kikplate kikplate/kikplate \
-      --set secrets.jwtSecret=$(openssl rand -base64 32) \
-      --set secrets.sso.githubClientSecret=YOUR_GITHUB_SECRET \
-      --namespace kikplate</code>
-                </div>
-
-            <div class="note">
-                <strong>Need more options?</strong> View the complete <a href="https://github.com/MoeidHeidari/kikplate/blob/helm/helm/values.yaml" target="_blank">values.yaml</a> for all configuration options.
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Footer -->
+        <section class="section" id="install">
+            <div class="container">
+                <div class="section-block">
+                    <div class="section-row">
+                        <h3>1. Authenticate with GHCR</h3>
+                        <p>Use a GitHub token that can read packages.</p>
+                        <code class="inline-code">helm registry login ghcr.io -u moeidheidari -p YOUR_GITHUB_TOKEN</code>
+                    </div>
+
+                    <div class="section-row">
+                        <h3>2. Inspect available versions</h3>
+                        <p>Query the OCI chart directly when you need a specific release.</p>
+                        <code class="inline-code">helm show chart oci://ghcr.io/moeidheidari/helm-charts/kikplate --version 0.1.1</code>
+                    </div>
+
+                    <div class="section-row">
+                        <h3>3. Install with overrides</h3>
+                        <p>Pass runtime secrets and install in one command.</p>
+                        <code class="inline-code">helm install kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
+  --namespace kikplate \
+  --create-namespace \
+  --set secrets.jwtSecret=$(openssl rand -base64 32) \
+  --set secrets.sso.githubClientSecret=YOUR_GITHUB_SECRET</code>
+                    </div>
+
+                    <div class="section-row">
+                        <h3>4. Verify the deployment</h3>
+                        <p>Check the workload and forward the web service locally.</p>
+                        <code class="inline-code">kubectl get pods -n kikplate
+kubectl port-forward -n kikplate svc/web 3000:3000</code>
+                    </div>
+                </div>
+
+                <div class="section-block meta-grid">
+                    <div class="meta-item">
+                        <span class="meta-label">OCI</span>
+                        <div class="meta-value">oci://ghcr.io/moeidheidari/helm-charts/kikplate</div>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Chart Source</span>
+                        <div class="meta-value"><a href="https://github.com/MoeidHeidari/kikplate/tree/helm/helm" target="_blank" rel="noopener noreferrer">View chart files</a></div>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Configuration</span>
+                        <div class="meta-value"><a href="https://github.com/MoeidHeidari/kikplate/blob/helm/helm/values.yaml" target="_blank" rel="noopener noreferrer">Review values.yaml</a></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
     <footer>
         <div class="container">
-            <footer-content>
+            <div class="footer-grid">
                 <div>
-                    <h4>Kikplate</h4>
-                    <p style="font-size: 0.9rem; color: var(--muted-foreground);">The home of your starter boilerplates</p>
+                    <p class="footer-title">Kikplate</p>
+                    <div class="footer-copy">The biggest library of production-ready project templates and boilerplates.</div>
                 </div>
-                <div>
-                    <h4>Links</h4>
-                    <a href="https://github.com/MoeidHeidari/kikplate" target="_blank">GitHub Repository</a>
-                    <a href="https://github.com/MoeidHeidari/kikplate/issues" target="_blank">Report Issues</a>
-                    <a href="https://github.com/MoeidHeidari/kikplate/discussions" target="_blank">Discussions</a>
+                <div class="footer-links">
+                    <p class="footer-title">Project</p>
+                    <a href="https://github.com/MoeidHeidari/kikplate" target="_blank" rel="noopener noreferrer">Repository</a>
+                    <a href="https://github.com/MoeidHeidari/kikplate/issues" target="_blank" rel="noopener noreferrer">Issues</a>
                 </div>
-                <div>
-                    <h4>Chart</h4>
-                    <a href="https://github.com/MoeidHeidari/kikplate/tree/helm/helm" target="_blank">Chart Source</a>
-                    <p style="font-size: 0.85rem; color: var(--muted-foreground); margin-top: 0.5rem;">
-                        OCI: <code>oci://ghcr.io/moeidheidari/helm-charts</code>
-                    </p>
+                <div class="footer-links">
+                    <p class="footer-title">Chart</p>
+                    <a href="index.yaml">index.yaml</a>
+                    <a href="artifacthub-repo.yml">artifacthub-repo.yml</a>
                 </div>
-            </footer-content>
-            <footer-bottom>
-                <p>&copy; 2024 Kikplate. Released under MIT License.</p>
-            </footer-bottom>
+                <div class="footer-links">
+                    <p class="footer-title">License</p>
+                    <div>MIT for repository assets</div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <div>© 2026 KikPlate. Open source and self-hostable.</div>
+                <div>Built to match the main frontend’s visual language.</div>
+            </div>
         </div>
     </footer>
 
     <script>
-        // Copy code blocks
-        document.querySelectorAll('.code-block').forEach(block => {
-            const code = block.querySelector('code').innerText;
-            const btn = document.createElement('button');
-            btn.className = 'code-copy';
-            btn.textContent = 'Copy';
-            btn.onclick = () => {
-                navigator.clipboard.writeText(code);
-                btn.textContent = 'Copied!';
-                setTimeout(() => btn.textContent = 'Copy', 2000);
-            };
-            block.style.position = 'relative';
-            block.appendChild(btn);
+        document.querySelectorAll("[data-copy-target]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                var targetId = button.getAttribute("data-copy-target");
+                var target = targetId ? document.getElementById(targetId) : null;
+                if (!target) return;
+                navigator.clipboard.writeText(target.textContent || "");
+                var original = button.textContent;
+                button.textContent = "Copied";
+                setTimeout(function () {
+                    button.textContent = original;
+                }, 1500);
+            });
         });
     </script>
 </body>
