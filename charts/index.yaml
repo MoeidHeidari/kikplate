@@ -19,10 +19,10 @@ entries:
           url: https://github.com/MoeidHeidari/kikplate/tree/helm/helm
     apiVersion: v2
     appVersion: v0.1.1
-    created: "2026-04-04T16:43:50.824743273Z"
+    created: "2026-04-04T16:47:49.365971956Z"
     description: Kikplate – the home of your starter boilerplates. A self-hosted platform
       for discovering, sharing, and submitting project templates.
-    digest: 13aee40baf336ece478f57161e1bdb5525b3b5c0893d26dff26e8ea79cc3dd4a
+    digest: e7267224d6d8176e482e5b455c9064731a5812f19aed22d257956e1e3d710877
     home: https://github.com/MoeidHeidari/kikplate
     icon: https://raw.githubusercontent.com/MoeidHeidari/kikplate/main/web/public/kikplate-logo-on-dark.svg
     keywords:
@@ -42,7 +42,7 @@ entries:
     version: 0.1.1
   - apiVersion: v2
     appVersion: latest
-    created: "2026-04-04T16:43:50.823598019Z"
+    created: "2026-04-04T16:47:49.364910648Z"
     description: Kikplate – the home of your starter boilerplates. A self-hosted platform
       for discovering, sharing, and submitting project templates.
     digest: 68a9ab49d732032e4c910dff3a5718c02559694a84865bc8ea700b7254af68cd
@@ -63,4 +63,4 @@ entries:
     urls:
     - https://moeidheidari.github.io/kikplate/charts/kikplate-0.1.0.tgz
     version: 0.1.0
-generated: "2026-04-04T16:43:50.822525601Z"
+generated: "2026-04-04T16:47:49.36379666Z"

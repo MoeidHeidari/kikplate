@@ -1,12 +1,28 @@
 apiVersion: v1
 entries:
   kikplate:
-  - apiVersion: v2
-    appVersion: latest
-    created: "2026-04-04T15:45:25.990684745Z"
+  - annotations:
+      artifacthub.io/images: |
+        - name: kikplate-api
+          image: ghcr.io/moeidheidari/kikplate-api:main
+        - name: kikplate-web
+          image: ghcr.io/moeidheidari/kikplate-web:main
+        - name: postgres
+          image: postgres:16
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: source
+          url: https://github.com/MoeidHeidari/kikplate
+        - name: support
+          url: https://github.com/MoeidHeidari/kikplate/issues
+        - name: chart
+          url: https://github.com/MoeidHeidari/kikplate/tree/helm/helm
+    apiVersion: v2
+    appVersion: v0.1.1
+    created: "2026-04-04T16:47:49.365971956Z"
     description: Kikplate – the home of your starter boilerplates. A self-hosted platform
       for discovering, sharing, and submitting project templates.
-    digest: 6085fc78fcbfeb3578f9ac8bf723e436e1d3de1c0cd3eda337fc1b4b42438557
+    digest: e7267224d6d8176e482e5b455c9064731a5812f19aed22d257956e1e3d710877
     home: https://github.com/MoeidHeidari/kikplate
     icon: https://raw.githubusercontent.com/MoeidHeidari/kikplate/main/web/public/kikplate-logo-on-dark.svg
     keywords:
@@ -22,6 +38,29 @@ entries:
     - https://github.com/MoeidHeidari/kikplate
     type: application
     urls:
-    - https://MoeidHeidari.github.io/kikplate/kikplate-0.1.0.tgz
+    - https://moeidheidari.github.io/kikplate/charts/kikplate-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    appVersion: latest
+    created: "2026-04-04T16:47:49.364910648Z"
+    description: Kikplate – the home of your starter boilerplates. A self-hosted platform
+      for discovering, sharing, and submitting project templates.
+    digest: 68a9ab49d732032e4c910dff3a5718c02559694a84865bc8ea700b7254af68cd
+    home: https://github.com/MoeidHeidari/kikplate
+    icon: https://raw.githubusercontent.com/MoeidHeidari/kikplate/main/web/public/kikplate-logo-on-dark.svg
+    keywords:
+    - kikplate
+    - boilerplate
+    - starter
+    - templates
+    maintainers:
+    - name: MoeidHeidari
+      url: https://github.com/MoeidHeidari
+    name: kikplate
+    sources:
+    - https://github.com/MoeidHeidari/kikplate
+    type: application
+    urls:
+    - https://moeidheidari.github.io/kikplate/charts/kikplate-0.1.0.tgz
     version: 0.1.0
-generated: "2026-04-04T15:45:25.989723875Z"
+generated: "2026-04-04T16:47:49.36379666Z"
