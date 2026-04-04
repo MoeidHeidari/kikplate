@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sync
+  namespace: {{ include "kikplate.namespace" . }}
+  labels:
+    {{- include "kikplate.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.sync.replicaCount }}
+  selector:
+    matchLabels:
+      app: sync
+  template:
+    metadata:
+      labels:
+        app: sync
+    spec:
+      containers:
+        - name: sync
+          image: "{{ .Values.sync.image.repository }}:{{ .Values.sync.image.tag }}"
+          imagePullPolicy: {{ .Values.sync.image.pullPolicy }}
+          args:
+            - app:sync
+          envFrom:
+            - secretRef:
+                name: app-credentials
+          env:
+            - name: CONFIG_PATH
+              value: /app/config/config.yaml
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: app-config
+              mountPath: /app/config/config.yaml
+              subPath: config.yaml
+              readOnly: true
+          resources:
+            {{- toYaml .Values.sync.resources | nindent 12 }}
+      volumes:
+        - name: app-config
+          configMap:
+            name: app-config

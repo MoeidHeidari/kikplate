@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: {{ include "kikplate.namespace" . }}
+  labels:
+    {{- include "kikplate.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.postgres.replicaCount }}
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+          imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.postgres.service.port }}
+              name: postgres
+          envFrom:
+            - secretRef:
+                name: postgres-secret
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.postgres.service.port }}
+            initialDelaySeconds: {{ .Values.postgres.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.postgres.readinessProbe.periodSeconds }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.postgres.service.port }}
+            initialDelaySeconds: {{ .Values.postgres.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.postgres.livenessProbe.periodSeconds }}
+          resources:
+            {{- toYaml .Values.postgres.resources | nindent 12 }}
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-data
