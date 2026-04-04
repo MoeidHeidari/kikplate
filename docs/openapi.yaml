@@ -26,31 +26,292 @@ components:
       properties:
         error:
           type: string
+      example:
+        error: "record not found"
+
     AuthTokens:
       type: object
       properties:
         access_token:
           type: string
+          description: Short-lived JWT for accessing protected endpoints.
         refresh_token:
           type: string
+          description: Long-lived token used to obtain a new access token.
+      required: [access_token, refresh_token]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        avatar_url:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [member, admin]
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Account:
+      type: object
+      description: >
+        An account links a provider identity (local, github, google, gitlab) to a
+        User record. A single user may have multiple accounts from different providers.
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+        provider:
+          type: string
+          description: Identity provider slug (local, github, google, gitlab).
+          example: github
+        provider_user_id:
+          type: string
+        display_name:
+          type: string
+          nullable: true
+        avatar_url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    Badge:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+          example: official
+        name:
+          type: string
+          example: Official
+        description:
+          type: string
+        icon:
+          type: string
+        tier:
+          type: string
+          enum: [community, verified, official, sponsored]
+        created_at:
+          type: string
+          format: date-time
+
+    PlateBadge:
+      type: object
+      description: A badge awarded to a specific plate.
+      properties:
+        id:
+          type: string
+          format: uuid
+        plate_id:
+          type: string
+          format: uuid
+        badge_id:
+          type: string
+          format: uuid
+        granted_by:
+          type: string
+        reason:
+          type: string
+          nullable: true
+        granted_at:
+          type: string
+          format: date-time
+        badge:
+          $ref: '#/components/schemas/Badge'
+
+    PlateTag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        plate_id:
+          type: string
+          format: uuid
+        tag:
+          type: string
+
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        logo_url:
+          type: string
+          nullable: true
+        owner_id:
+          type: string
+          format: uuid
+        owner:
+          $ref: '#/components/schemas/Account'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Plate:
+      type: object
+      description: Summary representation of a plate, returned in list endpoints.
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        type:
+          type: string
+          enum: [repository]
+        slug:
+          type: string
+          example: my-fastapi-starter
+        name:
+          type: string
+          example: My FastAPI Starter
+        description:
+          type: string
+          nullable: true
+        category:
+          type: string
+          example: backend
+        status:
+          type: string
+          enum: [pending, approved, rejected, archived]
+        visibility:
+          type: string
+          enum: [public, private, unlisted]
+        bookmark_count:
+          type: integer
+        star_count:
+          type: integer
+        avg_rating:
+          type: number
+          format: float
+        is_verified:
+          type: boolean
+        verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        repo_url:
+          type: string
+          nullable: true
+        branch:
+          type: string
+          nullable: true
+        sync_status:
+          type: string
+          enum: [pending, syncing, synced, failed, unverified]
+          nullable: true
+        last_synced_at:
+          type: string
+          format: date-time
+          nullable: true
+        user_rating:
+          type: integer
+          nullable: true
+          description: Rating the authenticated user gave this plate (omitted if unauthenticated).
+        owner:
+          $ref: '#/components/schemas/Account'
+        organization:
+          $ref: '#/components/schemas/Organization'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlateTag'
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlateBadge'
+
+    PlateReview:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        plate_id:
+          type: string
+          format: uuid
+        reviewer_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        title:
+          type: string
+          nullable: true
+        body:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
     PlateListResponse:
       type: object
       properties:
         data:
           type: array
           items:
-            type: object
-            additionalProperties: true
+            $ref: '#/components/schemas/Plate'
         total:
           type: integer
+          description: Total number of matching records across all pages.
+
     OrganizationListResponse:
       type: object
       properties:
         data:
           type: array
           items:
-            type: object
-            additionalProperties: true
+            $ref: '#/components/schemas/Organization'
 paths:
   /hello:
     get:
@@ -116,8 +377,10 @@ paths:
               properties:
                 email:
                   type: string
+                  format: email
                 password:
                   type: string
+                  format: password
       responses:
         '200':
           description: Authenticated
@@ -125,6 +388,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthTokens'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /auth/providers:
     get:
@@ -171,8 +440,16 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /me/profile:
     patch:
@@ -327,8 +604,16 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plate'
         '404':
           description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /plates/{id}:
     patch:
@@ -601,6 +886,19 @@ paths:
     get:
       tags: [Organizations]
       summary: List public organizations
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
       responses:
         '200':
           description: OK
@@ -654,8 +952,16 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
         '404':
           description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /organizations/{id}:
     get:
@@ -670,6 +976,16 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     put:
       tags: [Organizations]
       summary: Update organization
@@ -719,3 +1035,9 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Badge'

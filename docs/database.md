@@ -1,9 +1,8 @@
-# Kickplate Database
+# Database
 
-## Overview
-Kickplate uses PostgreSQL with GORM models in `api/model`. Identity is anchored on `account.id`, and all business entities reference accounts.
+Kikplate uses PostgreSQL as its only persistence layer. All models live in `api/model` and are managed through GORM. Identity is anchored on `account.id`, and every business entity references an account either directly or indirectly.
 
-Current product model is repository-first: plate type is `repository`.
+The current product model is repository-first: the only supported plate type is `repository`.
 
 ## Core Domains
 
