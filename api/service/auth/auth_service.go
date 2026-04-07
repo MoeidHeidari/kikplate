@@ -3,8 +3,13 @@ package auth
 import (
 	"context"
 	"crypto/sha256"
+	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net"
+	"net/smtp"
+	"net/url"
 	"strings"
 	"time"
 
@@ -74,10 +79,26 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) error {
 		Email:        input.Email,
 		PasswordHash: string(hash),
 		Role:         model.UserRoleMember,
-		IsActive:     false,
+		IsActive:     !s.env.EmailVerification.Enabled,
 	}
 	if err := s.userRepo.Create(ctx, user); err != nil {
 		return err
+	}
+
+	if !s.env.EmailVerification.Enabled {
+		return nil
+	}
+
+	if !s.env.SMTP.IsConfigured() {
+		return ErrSMTPNotConfigured
+	}
+
+	ttl := 24 * time.Hour
+	if s.env.EmailVerification.TokenTTL != "" {
+		parsed, err := time.ParseDuration(s.env.EmailVerification.TokenTTL)
+		if err == nil && parsed > 0 {
+			ttl = parsed
+		}
 	}
 
 	rawToken := uuid.New().String()
@@ -88,13 +109,144 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) error {
 		UserID:    user.ID,
 		Token:     hashed,
 		IsUsed:    false,
-		ExpiresAt: time.Now().Add(24 * time.Hour),
+		ExpiresAt: time.Now().Add(ttl),
 	}
 	if err := s.emailVerRepo.Create(ctx, ev); err != nil {
 		return err
 	}
 
-	s.logger.Infof("verification token for %s: %s", input.Email, rawToken)
+	if err := s.sendVerificationEmail(input.Email, rawToken); err != nil {
+		s.logger.Errorf("failed sending verification email to %s: %v", input.Email, err)
+		return ErrVerificationEmailFailed
+	}
+
+	return nil
+}
+
+func (s *authService) sendVerificationEmail(recipientEmail, rawToken string) error {
+	verifyURL, err := s.buildVerificationURL(rawToken)
+	if err != nil {
+		return err
+	}
+
+	subject := "Verify your Kikplate account"
+	body := fmt.Sprintf("Welcome to Kikplate!\n\nPlease verify your email by opening this link:\n%s\n\nIf you did not request this account, you can ignore this email.", verifyURL)
+
+	from := s.env.SMTP.FromEmail
+	if s.env.SMTP.FromName != "" {
+		from = fmt.Sprintf("%s <%s>", s.env.SMTP.FromName, s.env.SMTP.FromEmail)
+	}
+
+	message := strings.Join([]string{
+		fmt.Sprintf("From: %s", from),
+		fmt.Sprintf("To: %s", recipientEmail),
+		fmt.Sprintf("Subject: %s", subject),
+		"MIME-Version: 1.0",
+		"Content-Type: text/plain; charset=UTF-8",
+		"",
+		body,
+	}, "\r\n")
+
+	return sendSMTPMail(s.env.SMTP, s.env.SMTP.FromEmail, []string{recipientEmail}, []byte(message))
+}
+
+func (s *authService) buildVerificationURL(rawToken string) (string, error) {
+	base := strings.TrimSpace(s.env.EmailVerification.VerifyURLBase)
+	if base == "" {
+		base = strings.TrimRight(s.env.FrontendURL, "/") + "/verify-email"
+	}
+
+	parsed, err := url.Parse(base)
+	if err != nil {
+		return "", err
+	}
+
+	query := parsed.Query()
+	query.Set("token", rawToken)
+	parsed.RawQuery = query.Encode()
+
+	return parsed.String(), nil
+}
+
+func sendSMTPMail(cfg lib.SMTPConfig, from string, to []string, message []byte) error {
+	if !cfg.IsConfigured() {
+		return ErrSMTPNotConfigured
+	}
+
+	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
+	tlsConfig := &tls.Config{ServerName: cfg.Host}
+
+	var (
+		client *smtp.Client
+		err    error
+	)
+
+	if cfg.UseStartTL {
+		conn, dialErr := net.Dial("tcp", addr)
+		if dialErr != nil {
+			return dialErr
+		}
+
+		client, err = smtp.NewClient(conn, cfg.Host)
+		if err != nil {
+			_ = conn.Close()
+			return err
+		}
+
+		if ok, _ := client.Extension("STARTTLS"); ok {
+			if err := client.StartTLS(tlsConfig); err != nil {
+				_ = client.Close()
+				return err
+			}
+		}
+	} else {
+		tlsConn, dialErr := tls.Dial("tcp", addr, tlsConfig)
+		if dialErr != nil {
+			return dialErr
+		}
+
+		client, err = smtp.NewClient(tlsConn, cfg.Host)
+		if err != nil {
+			_ = tlsConn.Close()
+			return err
+		}
+	}
+
+	defer client.Close()
+
+	auth := smtp.PlainAuth("", cfg.Username, cfg.Password, cfg.Host)
+	if ok, _ := client.Extension("AUTH"); ok {
+		if err := client.Auth(auth); err != nil {
+			return err
+		}
+	}
+
+	if err := client.Mail(from); err != nil {
+		return err
+	}
+	for _, recipient := range to {
+		if err := client.Rcpt(recipient); err != nil {
+			return err
+		}
+	}
+
+	writer, err := client.Data()
+	if err != nil {
+		return err
+	}
+
+	if _, err := writer.Write(message); err != nil {
+		_ = writer.Close()
+		return err
+	}
+
+	if err := writer.Close(); err != nil {
+		return err
+	}
+
+	if err := client.Quit(); err != nil && !errors.Is(err, net.ErrClosed) {
+		return err
+	}
 
 	return nil
 }
@@ -417,6 +569,11 @@ func (s *authService) oauthConfig(provider lib.OAuthProvider) *oauth2.Config {
 		}
 	case "google":
 		endpoint = endpoints.Google
+	case "gitlab":
+		endpoint = oauth2.Endpoint{
+			AuthURL:  "https://gitlab.com/oauth/authorize",
+			TokenURL: "https://gitlab.com/oauth/token",
+		}
 	default:
 		endpoint = oauth2.Endpoint{}
 	}
@@ -444,6 +601,8 @@ func (s *authService) fetchProfile(ctx context.Context, providerName string, tok
 		return s.fetchGitHubProfile(ctx, token)
 	case "google":
 		return s.fetchGoogleProfile(ctx, token)
+	case "gitlab":
+		return s.fetchGitLabProfile(ctx, token)
 	default:
 		return nil, ErrProviderNotFound
 	}
@@ -511,6 +670,34 @@ func (s *authService) fetchGoogleProfile(ctx context.Context, token *oauth2.Toke
 		Name:      g.Name,
 		Email:     g.Email,
 		AvatarURL: g.AvatarURL,
+	}, nil
+}
+
+func (s *authService) fetchGitLabProfile(ctx context.Context, token *oauth2.Token) (*oauthProfile, error) {
+	client := oauth2.NewClient(ctx, oauth2.StaticTokenSource(token))
+	resp, err := client.Get("https://gitlab.com/api/v4/user")
+	if err != nil {
+		return nil, ErrOAuthFailed
+	}
+	defer resp.Body.Close()
+
+	var gl struct {
+		ID        int    `json:"id"`
+		Username  string `json:"username"`
+		Name      string `json:"name"`
+		Email     string `json:"email"`
+		AvatarURL string `json:"avatar_url"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&gl); err != nil {
+		return nil, ErrOAuthFailed
+	}
+
+	return &oauthProfile{
+		ID:        fmt.Sprintf("%d", gl.ID),
+		Login:     gl.Username,
+		Name:      gl.Name,
+		Email:     gl.Email,
+		AvatarURL: gl.AvatarURL,
 	}, nil
 }
 

@@ -1,7 +1,6 @@
 <div align="center">
   <img src="docs/images/logo.svg" alt="Kikplate Logo" width="200"/>
-  
-
+  <br><br>
   <a href="https://join.slack.com/t/kikplate/shared_invite/zt-3uddz8y51-4ko_TBozERrr7jhl2AzYSg">
     <img src="https://img.shields.io/badge/Join%20kikplate%20on%20Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white" alt="Join on Slack"/>
   </a>

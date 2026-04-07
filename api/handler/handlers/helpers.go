@@ -34,6 +34,10 @@ func respondServiceError(w http.ResponseWriter, err error) {
 		respondError(w, http.StatusForbidden, err.Error())
 	case errors.Is(err, auth.ErrTokenInvalid):
 		respondError(w, http.StatusUnprocessableEntity, err.Error())
+	case errors.Is(err, auth.ErrSMTPNotConfigured):
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
+	case errors.Is(err, auth.ErrVerificationEmailFailed):
+		respondError(w, http.StatusBadGateway, err.Error())
 	case errors.Is(err, auth.ErrNotFound):
 		respondError(w, http.StatusNotFound, err.Error())
 	case errors.Is(err, auth.ErrUnauthorized):

@@ -19,6 +19,26 @@ type OAuthProvider struct {
 	Scopes       []string `mapstructure:"scopes"`
 }
 
+type EmailVerificationConfig struct {
+	Enabled       bool   `mapstructure:"enabled"`
+	TokenTTL      string `mapstructure:"token_ttl"`
+	VerifyURLBase string `mapstructure:"verify_url_base"`
+}
+
+type SMTPConfig struct {
+	Host       string `mapstructure:"host"`
+	Port       int    `mapstructure:"port"`
+	Username   string `mapstructure:"username"`
+	Password   string `mapstructure:"password"`
+	FromEmail  string `mapstructure:"from_email"`
+	FromName   string `mapstructure:"from_name"`
+	UseStartTL bool   `mapstructure:"use_starttls"`
+}
+
+func (c SMTPConfig) IsConfigured() bool {
+	return c.Host != "" && c.Port > 0 && c.Username != "" && c.Password != "" && c.FromEmail != ""
+}
+
 type SocialMediaLink struct {
 	Type string `mapstructure:"type" json:"type"`
 	Link string `mapstructure:"link" json:"link"`
@@ -41,23 +61,25 @@ type BadgeConfig struct {
 }
 
 type Env struct {
-	ServerPort       string `mapstructure:"SERVER_PORT"`
-	LogLevel         string `mapstructure:"SERVER_LOG_LEVEL"`
-	Environment      string `mapstructure:"ENV"`
-	DBUsername       string `mapstructure:"DB_USER"`
-	DBPassword       string `mapstructure:"DB_PASS"`
-	DBHost           string `mapstructure:"DB_HOST"`
-	DBPort           string `mapstructure:"DB_PORT"`
-	DBName           string `mapstructure:"DB_NAME"`
-	JWTSecret        string `mapstructure:"JWT_SECRET"`
-	AuthHeader       string `mapstructure:"AUTH_HEADER"`
-	SyncInterval     string
-	SyncPollInterval string
-	SyncBatchSize    int
-	FrontendURL      string
-	OAuthProviders   []OAuthProvider
-	Customization    Customization
-	Badges           []BadgeConfig
+	ServerPort        string `mapstructure:"SERVER_PORT"`
+	LogLevel          string `mapstructure:"SERVER_LOG_LEVEL"`
+	Environment       string `mapstructure:"ENV"`
+	DBUsername        string `mapstructure:"DB_USER"`
+	DBPassword        string `mapstructure:"DB_PASS"`
+	DBHost            string `mapstructure:"DB_HOST"`
+	DBPort            string `mapstructure:"DB_PORT"`
+	DBName            string `mapstructure:"DB_NAME"`
+	JWTSecret         string `mapstructure:"JWT_SECRET"`
+	AuthHeader        string `mapstructure:"AUTH_HEADER"`
+	SyncInterval      string
+	SyncPollInterval  string
+	SyncBatchSize     int
+	FrontendURL       string
+	OAuthProviders    []OAuthProvider
+	EmailVerification EmailVerificationConfig
+	SMTP              SMTPConfig
+	Customization     Customization
+	Badges            []BadgeConfig
 }
 
 func (e Env) GetOAuthProvider(name string) (OAuthProvider, bool) {
@@ -163,6 +185,58 @@ func NewEnv() Env {
 		os.Getenv("SYNC_POLL_INTERVAL"),
 		"30s",
 	)
+	env.EmailVerification.Enabled = getConfigBool(
+		"auth.email_verification.enabled",
+		"AUTH_EMAIL_VERIFICATION_ENABLED",
+		false,
+	)
+	env.EmailVerification.TokenTTL = firstNonEmpty(
+		getConfigValue("auth.email_verification.token_ttl", "", ""),
+		os.Getenv("AUTH_EMAIL_VERIFICATION_TOKEN_TTL"),
+		"24h",
+	)
+	env.EmailVerification.VerifyURLBase = firstNonEmpty(
+		getConfigValue("auth.email_verification.verify_url_base", "", ""),
+		os.Getenv("AUTH_EMAIL_VERIFICATION_VERIFY_URL_BASE"),
+	)
+
+	smtpPortRaw := firstNonEmpty(
+		getConfigValue("smtp.port", "", ""),
+		os.Getenv("SMTP_PORT"),
+		"587",
+	)
+	if v, err := strconv.Atoi(smtpPortRaw); err != nil || v <= 0 {
+		env.SMTP.Port = 587
+	} else {
+		env.SMTP.Port = v
+	}
+
+	env.SMTP.Host = firstNonEmpty(
+		getConfigValue("smtp.host", "", ""),
+		os.Getenv("SMTP_HOST"),
+	)
+	env.SMTP.Username = firstNonEmpty(
+		getConfigValue("smtp.username", "", ""),
+		os.Getenv("SMTP_USERNAME"),
+	)
+	env.SMTP.Password = firstNonEmpty(
+		getConfigValue("smtp.password", "", ""),
+		os.Getenv("SMTP_PASSWORD"),
+	)
+	env.SMTP.FromEmail = firstNonEmpty(
+		getConfigValue("smtp.from_email", "", ""),
+		os.Getenv("SMTP_FROM_EMAIL"),
+	)
+	env.SMTP.FromName = firstNonEmpty(
+		getConfigValue("smtp.from_name", "", ""),
+		os.Getenv("SMTP_FROM_NAME"),
+		"Kikplate",
+	)
+	env.SMTP.UseStartTL = getConfigBool(
+		"smtp.use_starttls",
+		"SMTP_USE_STARTTLS",
+		true,
+	)
 
 	batchSizeRaw := firstNonEmpty(
 		getConfigValue("sync.batch_size", "", ""),
@@ -240,6 +314,20 @@ func getEnvOrDefault(key, defaultValue string) string {
 		return defaultValue
 	}
 	return ""
+}
+
+func getConfigBool(key, envKey string, defaultValue bool) bool {
+	if raw := os.Getenv(envKey); raw != "" {
+		if v, err := strconv.ParseBool(raw); err == nil {
+			return v
+		}
+	}
+
+	if viper.IsSet(key) {
+		return viper.GetBool(key)
+	}
+
+	return defaultValue
 }
 
 func firstNonEmpty(values ...string) string {

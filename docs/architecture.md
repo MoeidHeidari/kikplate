@@ -2,7 +2,6 @@
 
 Kikplate is a self-hosted open source marketplace for project templates. It is composed of four runtime processes, all built from a single Go binary in `api/`, plus a Next.js frontend in `web/`.
 
-![Kikplate Architecture](images/architecture.png)
 
 ## Components
 

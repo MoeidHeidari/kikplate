@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Building2, Plus, Loader2, Pencil, Check, X, Trash2 } from "lucide-react"
 import { useCreateOrganization, useMyOrganizations, useRemoveOrganization, useUpdateOrganization } from "@/src/presentation/hooks/useOrganizations"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 
 export function OrganizationsManager() {
   const { data: organizations, isLoading } = useMyOrganizations()
@@ -231,7 +232,14 @@ export function OrganizationsManager() {
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden border border-border bg-muted">
                   {org.logo_url ? (
-                    <img src={org.logo_url} alt={`${org.name} logo`} className="h-full w-full object-cover" />
+                    <Image
+                      src={org.logo_url}
+                      alt={`${org.name} logo`}
+                      width={40}
+                      height={40}
+                      unoptimized
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                   )}

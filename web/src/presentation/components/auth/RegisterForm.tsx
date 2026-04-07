@@ -20,8 +20,8 @@ export function RegisterForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     try {
-      await register.mutateAsync({ username, email, password })
-      toast.success("Account created — check your email to verify.")
+      const result = await register.mutateAsync({ username, email, password })
+      toast.success(result.message)
       router.push("/login")
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Registration failed")

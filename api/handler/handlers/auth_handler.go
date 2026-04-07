@@ -41,8 +41,13 @@ func (h AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	message := "registration successful, you can now login"
+	if h.env.EmailVerification.Enabled {
+		message = "registration successful, check your email to verify your account"
+	}
+
 	respondJSON(w, http.StatusCreated, map[string]string{
-		"message": "registration successful, check your email to verify your account",
+		"message": message,
 	})
 }
 

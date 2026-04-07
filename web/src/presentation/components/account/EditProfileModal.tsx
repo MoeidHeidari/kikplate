@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useState } from "react"
 import { X, Loader2 } from "lucide-react"
 import type { MeResult } from "@/src/domain/entities/User"
@@ -92,9 +93,12 @@ export function EditProfileModal({ me, onClose, onSaved }: Props) {
 
           {avatarUrl && (
             <div className="flex items-center gap-3">
-              <img
+                <Image
                 src={avatarUrl}
                 alt="Preview"
+                  width={40}
+                  height={40}
+                  unoptimized
                 className="h-10 w-10 object-cover border border-border"
                 onError={e => (e.currentTarget.style.display = "none")}
               />

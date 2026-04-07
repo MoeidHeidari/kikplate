@@ -26,6 +26,29 @@ sync:
   # Number of items handled in each sync batch.
   batch_size: 25
 
+# Local email/password authentication settings.
+auth:
+  email_verification:
+    # When false, users registered via /auth/register are active immediately.
+    # When true, users must verify their email before login is allowed.
+    enabled: false
+    # Expiration duration for verification links.
+    token_ttl: 24h
+    # Optional absolute URL used for links in verification emails.
+    # If omitted, server.frontend_url + /verify-email is used.
+    verify_url_base: http://localhost:3000/verify-email
+
+# SMTP settings used only when auth.email_verification.enabled=true.
+# Example below matches Amazon SES SMTP endpoint style.
+smtp:
+  host: email-smtp.us-east-1.amazonaws.com
+  port: 587
+  username: your_ses_smtp_username
+  password: your_ses_smtp_password
+  from_email: no-reply@example.com
+  from_name: Kikplate
+  use_starttls: true
+
 # OAuth / SSO providers exposed by the API.
 sso:
   providers:

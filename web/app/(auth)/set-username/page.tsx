@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useMe } from "@/src/presentation/hooks/useAuth"
 import { useMounted } from "@/src/presentation/hooks/useMounted"
@@ -20,6 +20,12 @@ export default function SetUsernamePage() {
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (me?.username) {
+      router.replace("/")
+    }
+  }, [me?.username, router])
+
   if (!mounted || isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -29,7 +35,6 @@ export default function SetUsernamePage() {
   }
 
   if (me?.username) {
-    router.replace("/")
     return null
   }
 

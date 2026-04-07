@@ -104,6 +104,55 @@ sso:
 
 Client secrets should never be committed to source control. In production, set them via Kubernetes secrets or environment variables and leave them empty in the config file.
 
+### auth.email_verification
+
+Controls local (non-SSO) email/password signup behavior.
+
+```yaml
+auth:
+  email_verification:
+    enabled: false
+    token_ttl: 24h
+    verify_url_base: http://localhost:3000/verify-email
+```
+
+- `enabled=false`: users registered through `POST /auth/register` are active immediately.
+- `enabled=true`: users are created inactive and must verify via emailed link before login.
+- `verify_url_base` is optional. If omitted, the API uses `server.frontend_url + /verify-email`.
+
+| Environment Variable | Config Key |
+|---------------------|-----------|
+| `AUTH_EMAIL_VERIFICATION_ENABLED` | `auth.email_verification.enabled` |
+| `AUTH_EMAIL_VERIFICATION_TOKEN_TTL` | `auth.email_verification.token_ttl` |
+| `AUTH_EMAIL_VERIFICATION_VERIFY_URL_BASE` | `auth.email_verification.verify_url_base` |
+
+### smtp
+
+SMTP sender configuration used when `auth.email_verification.enabled=true`.
+
+```yaml
+smtp:
+  host: email-smtp.us-east-1.amazonaws.com
+  port: 587
+  username: your_ses_smtp_username
+  password: your_ses_smtp_password
+  from_email: no-reply@example.com
+  from_name: Kikplate
+  use_starttls: true
+```
+
+For Amazon SES, use the SMTP endpoint of your SES region (for example `email-smtp.us-east-1.amazonaws.com`) with SES SMTP credentials.
+
+| Environment Variable | Config Key |
+|---------------------|-----------|
+| `SMTP_HOST` | `smtp.host` |
+| `SMTP_PORT` | `smtp.port` |
+| `SMTP_USERNAME` | `smtp.username` |
+| `SMTP_PASSWORD` | `smtp.password` |
+| `SMTP_FROM_EMAIL` | `smtp.from_email` |
+| `SMTP_FROM_NAME` | `smtp.from_name` |
+| `SMTP_USE_STARTTLS` | `smtp.use_starttls` |
+
 ### Authentication Header
 
 To enable trusted reverse-proxy header authentication:
@@ -195,4 +244,14 @@ See [Kubernetes](kubernetes.md) and [Helm](helm.md) for deployment-specific conf
 | `SERVER_LOG_LEVEL` | Log verbosity | `info` |
 | `JWT_SECRET` | JWT signing secret | Required |
 | `AUTH_HEADER` | Trusted header name for reverse-proxy auth | Disabled |
+| `AUTH_EMAIL_VERIFICATION_ENABLED` | Enable email verification for local signup | `false` |
+| `AUTH_EMAIL_VERIFICATION_TOKEN_TTL` | Verification token expiration duration | `24h` |
+| `AUTH_EMAIL_VERIFICATION_VERIFY_URL_BASE` | Base verification URL in outgoing email | `FRONTEND_URL/verify-email` |
+| `SMTP_HOST` | SMTP host for verification emails | None |
+| `SMTP_PORT` | SMTP port for verification emails | `587` |
+| `SMTP_USERNAME` | SMTP username | None |
+| `SMTP_PASSWORD` | SMTP password | None |
+| `SMTP_FROM_EMAIL` | Sender email address | None |
+| `SMTP_FROM_NAME` | Sender display name | `Kikplate` |
+| `SMTP_USE_STARTTLS` | Use STARTTLS instead of implicit TLS | `true` |
 | `ENV` | Environment name (`development`, `production`) | `development` |

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { ArrowLeft, Calendar } from "lucide-react"
 import { PlateGrid } from "@/src/presentation/components/plates/PlateGrid"
 import { relativeTime } from "@/src/presentation/utils/plateUtils"
@@ -47,9 +48,12 @@ export default async function PublicOrgPage({ params }: Props) {
           <div className="flex items-center gap-4">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden border border-border bg-muted">
               {org.logo_url ? (
-                <img
+                <Image
                   src={org.logo_url}
                   alt={org.name}
+                  width={64}
+                  height={64}
+                  unoptimized
                   className="h-full w-full object-cover"
                 />
               ) : (
