@@ -39,7 +39,7 @@ export function Navbar() {
     if (mounted && me && !me.username && !window.location.pathname.startsWith("/set-username")) {
       router.push("/set-username")
     }
-  }, [mounted, me])
+  }, [mounted, me, router])
 
   const initials = me?.username
     ? me.username.slice(0, 2).toUpperCase()
@@ -106,9 +106,6 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-3 text-white/40 px-3">
-            <Link href="/docs" className="hover:text-white transition-colors" title="Docs">
-              docs
-            </Link>
             <Link href="/stats" className="hover:text-white transition-colors" title="Stats">
               stats
             </Link>

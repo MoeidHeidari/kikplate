@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { cookies } from "next/headers"
 import Link from "next/link"
+import Image from "next/image"
 import {
   GitBranch, FileText, Heart, Star,
   Tag, CheckCircle2, Calendar,
@@ -159,9 +160,12 @@ export default async function PlateDetailPage({ params }: Props) {
                 <div className="mb-4 flex items-center gap-2.5 border-b border-border pb-4">
                   <Link href={`/orgs/${encodeURIComponent(plate.organization.name)}`} className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden border border-border bg-muted hover:border-foreground/30 transition-colors">
                     {plate.organization.logo_url ? (
-                      <img
+                      <Image
                         src={plate.organization.logo_url}
                         alt={`${plate.organization.name} logo`}
+                        width={48}
+                        height={48}
+                        unoptimized
                         className="h-full w-full object-cover"
                       />
                     ) : (
@@ -189,9 +193,12 @@ export default async function PlateDetailPage({ params }: Props) {
                 <div className="mb-4 flex items-center gap-2.5 border-b border-border pb-4">
                   <Link href={`/users/${encodeURIComponent(plate.owner.username ?? "")}`} className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden border border-border bg-muted hover:border-foreground/30 transition-colors">
                     {plate.owner.avatar_url ? (
-                      <img
+                      <Image
                         src={plate.owner.avatar_url}
                         alt={plate.owner.username ?? "owner"}
+                        width={48}
+                        height={48}
+                        unoptimized
                         className="h-full w-full object-cover"
                       />
                     ) : (

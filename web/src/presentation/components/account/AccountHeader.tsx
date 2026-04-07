@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { LogOut } from "lucide-react"
 import type { MeResult } from "@/src/domain/entities/User"
 
@@ -17,9 +18,12 @@ export function AccountHeader({ me, onLogout }: Props) {
       <div className="flex items-center gap-5">
         <div className="relative flex h-16 w-16 shrink-0 items-center justify-center border border-border bg-card text-xl font-bold text-foreground overflow-hidden">
           {me.avatar_url ? (
-            <img
+            <Image
               src={me.avatar_url}
               alt={displayName}
+              width={64}
+              height={64}
+              unoptimized
               className="h-full w-full object-cover"
             />
           ) : (

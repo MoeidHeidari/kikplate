@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { MarkdownRenderer } from '@/src/presentation/components/markdown/MarkdownRenderer'
 import { BookOpen, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -10,7 +10,7 @@ interface DocItem {
   name: string
 }
 
-export default function DocsPage() {
+function DocsPageContent() {
   const searchParams = useSearchParams()
   const [docs, setDocs] = useState<DocItem[]>([])
   const [currentDoc, setCurrentDoc] = useState(searchParams.get('doc') || 'getting-started')
@@ -179,5 +179,27 @@ export default function DocsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function DocsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background mt-20">
+          <div className="mx-auto max-w-7xl px-4 py-12 lg:py-16">
+            <div className="space-y-6 animate-pulse p-6">
+              <div className="h-12 bg-muted rounded w-1/2" />
+              <div className="space-y-3">
+                <div className="h-4 bg-muted rounded" />
+                <div className="h-4 bg-muted rounded w-5/6" />
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <DocsPageContent />
+    </Suspense>
   )
 }
