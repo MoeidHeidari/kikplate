@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server"
 
-const CACHE_SEC = 600
-
-export const revalidate = CACHE_SEC
+export const revalidate = 600
 
 function parseRepo(spec: string): { owner: string; repo: string } | null {
   const parts = spec.split("/").filter(Boolean)
@@ -26,7 +24,7 @@ async function fetchGitHubStars(): Promise<number | null> {
 
   const res = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}`, {
     headers,
-    next: { revalidate: CACHE_SEC },
+    next: { revalidate: 600 },
   })
 
   if (!res.ok) return null
@@ -55,7 +53,7 @@ async function fetchSlackHumanMemberCount(): Promise<number | null> {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body,
-      next: { revalidate: CACHE_SEC },
+      next: { revalidate: 600 },
     })
 
     const data = (await res.json()) as {
