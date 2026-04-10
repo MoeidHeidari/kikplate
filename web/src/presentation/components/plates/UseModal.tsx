@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Copy, Check, X, Terminal, GitBranch } from "lucide-react"
 import { toast } from "sonner"
 
@@ -88,9 +89,13 @@ export function UseModal({ open, onClose, repoUrl, slug }: Props) {
           <div className="border-t border-border pt-4">
             <p className="text-xs text-muted-foreground">
               Don&apos;t have the CLI?{" "}
-              <span className="text-foreground underline underline-offset-4 cursor-pointer">
+              <Link
+                href="/docs?doc=cli"
+                onClick={onClose}
+                className="text-foreground underline underline-offset-4 hover:text-foreground/90"
+              >
                 Install kikplate
-              </span>
+              </Link>
             </p>
           </div>
         </div>

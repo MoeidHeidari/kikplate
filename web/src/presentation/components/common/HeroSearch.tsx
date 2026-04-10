@@ -33,7 +33,9 @@ export function HeroSearch() {
   const results = data?.data ?? []
   const showDropdown = open && query.trim().length > 1
   const titleLines = (appConfig?.banner_title ?? "The biggest library of\nstarter boilerplates").split("\n")
-  const socialItems = (appConfig?.social_media ?? []).slice(0, 4)
+  const socialItems = (appConfig?.social_media ?? [])
+    .filter((s) => s.link && s.link !== "#")
+    .slice(0, 6)
   const sampleQueries = appConfig?.prepared_queries ?? SAMPLE_QUERIES
 
   const SlackIcon = () => (

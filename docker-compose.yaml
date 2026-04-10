@@ -43,6 +43,7 @@ services:
       - "3000:3000"
     environment:
       - API_INTERNAL_URL=http://api:3001
+      - STATS_GITHUB_REPO=kikplate/kikplate
     depends_on:
       - api
     restart: unless-stopped

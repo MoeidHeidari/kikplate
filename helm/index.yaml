@@ -6,20 +6,20 @@ entries:
       created: ""
       description: Kikplate – the home of your starter boilerplates.
       digest: ""
-      home: https://github.com/MoeidHeidari/kikplate
-      icon: https://raw.githubusercontent.com/MoeidHeidari/kikplate/main/web/public/kikplate-logo-on-dark.svg
+      home: https://github.com/kikplate/kikplate
+      icon: https://raw.githubusercontent.com/kikplate/kikplate/main/web/public/kikplate-logo-on-dark.svg
       keywords:
         - kikplate
         - boilerplate
         - starter
         - templates
       maintainers:
-        - name: MoeidHeidari
-          url: https://github.com/MoeidHeidari
+        - name: kikplate
+          url: https://github.com/kikplate
       name: kikplate
       sources:
-        - https://github.com/MoeidHeidari/kikplate
+        - https://github.com/kikplate/kikplate
       urls:
-        - https://moeidheidari.github.io/kikplate/kikplate-0.1.0.tgz
+        - https://kikplate.github.io/kikplate/kikplate-0.1.0.tgz
       version: 0.1.0
 generated: ""

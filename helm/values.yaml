@@ -13,7 +13,7 @@ namespace: ""
 api:
   replicaCount: 1
   image:
-    repository: ghcr.io/moeidheidari/kikplate-api
+    repository: ghcr.io/kikplate/kikplate-api
     tag: main
     pullPolicy: IfNotPresent
   service:
@@ -38,7 +38,7 @@ api:
 sync:
   replicaCount: 1
   image:
-    repository: ghcr.io/moeidheidari/kikplate-api
+    repository: ghcr.io/kikplate/kikplate-api
     tag: main
     pullPolicy: IfNotPresent
   resources:
@@ -55,7 +55,7 @@ sync:
 web:
   replicaCount: 1
   image:
-    repository: ghcr.io/moeidheidari/kikplate-web
+    repository: ghcr.io/kikplate/kikplate-web
     tag: main
     pullPolicy: IfNotPresent
   service:
@@ -168,16 +168,16 @@ config:
   customization:
     logo: /kikplate-logo-on-dark.svg
     bannerTitle: "The Home of your starter boilerplates"
-    badgeRequestUrl: "https://github.com/MoeidHeidari/kikplate/issues/new?template=badge-request.yml"
+    badgeRequestUrl: "https://github.com/kikplate/kikplate/issues/new?template=badge-request.yml"
     socialMedia:
       - type: github
-        link: "https://github.com/kickplate"
+        link: "https://github.com/kikplate/kikplate"
       - type: slack
-        link: "https://your-workspace.slack.com"
+        link: ""
       - type: linkedin
-        link: "https://www.linkedin.com/company/your-company"
+        link: "https://www.linkedin.com/company/kikplate"
       - type: x
-        link: "https://x.com/your-handle"
+        link: "https://x.com/kikplate"
     preparedQueries:
       - "Golang starter"
       - "Clean architecture boilerplate for Nodejs"

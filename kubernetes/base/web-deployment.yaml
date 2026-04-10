@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: ghcr.io/moeidheidari/kikplate-web:latest
+          image: ghcr.io/kikplate/kikplate-web:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000

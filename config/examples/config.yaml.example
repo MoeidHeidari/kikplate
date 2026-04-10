@@ -82,13 +82,13 @@ customization:
   # Social links shown in the hero section.
   social_media:
     - type: github
-      link: "https://github.com/kickplate"
+      link: "https://github.com/kikplate/kikplate"
     - type: slack
-      link: "https://your-workspace.slack.com"
+      link: ""
     - type: linkedin
-      link: "https://www.linkedin.com/company/your-company"
+      link: "https://www.linkedin.com/company/kikplate"
     - type: x
-      link: "https://x.com/your-handle"
+      link: "https://x.com/kikplate"
 
   # Clickable suggested searches shown below the hero search box.
   prepared_queries:

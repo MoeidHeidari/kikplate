@@ -7,7 +7,7 @@
 
 
   [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kikplate)](https://artifacthub.io/packages/search?repo=kikplate)
-  [![GitHub stars](https://img.shields.io/github/stars/moeidheidari/kikplate?style=social)](https://github.com/moeidheidari/kikplate)
+  [![GitHub stars](https://img.shields.io/github/stars/kikplate/kikplate?style=social)](https://github.com/kikplate/kikplate)
   
   
 # Kikplate

@@ -2,6 +2,9 @@
 
 import Link from "next/link"
 import { useStats } from "@/src/presentation/hooks/usePlates"
+import { useConfig } from "@/src/presentation/hooks/useConfig"
+import { useExternalCommunityStats } from "@/src/presentation/hooks/useExternalCommunityStats"
+import { getSocialLink } from "@/src/lib/socialLinks"
 import { formatCount } from "@/src/presentation/utils/plateUtils"
 import { Github, Users, Layers, Download, Package, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react"
 
@@ -29,14 +32,23 @@ function StatCard({ icon, value, label }: StatCardProps) {
 
 export function StatsBanner() {
   const { data } = useStats()
+  const { data: appConfig } = useConfig()
+  const { data: externalStats, isLoading: externalLoading } = useExternalCommunityStats()
+  const githubUrl = getSocialLink(appConfig?.social_media, "github") ?? "https://github.com/kikplate/kikplate"
+  const slackUrl = getSocialLink(appConfig?.social_media, "slack")
+
+  const githubStarsDisplay =
+    externalLoading ? "…" : externalStats?.githubStars != null ? formatCount(externalStats.githubStars) : "—"
+  const slackMembersDisplay =
+    externalLoading ? "…" : externalStats?.slackMembers != null ? formatCount(externalStats.slackMembers) : "—"
 
   const allStats = [
     { icon: <Package className="h-5 w-5" />, value: data ? formatCount(data.total_plates) : "—", label: "Plates" },
     { icon: <Users className="h-5 w-5" />, value: data ? formatCount(data.total_contributors) : "—", label: "Contributors" },
     { icon: <Layers className="h-5 w-5" />, value: data ? formatCount(data.total_categories) : "—", label: "Categories" },
     { icon: <Download className="h-5 w-5" />, value: data ? formatCount(data.total_bookmarks) : "—", label: "Bookmarks" },
-    { icon: <Github className="h-5 w-5" />, value: "—", label: "GitHub Stars" },
-    { icon: <SlackIcon />, value: "—", label: "Slack Members" },
+    { icon: <Github className="h-5 w-5" />, value: githubStarsDisplay, label: "GitHub Stars" },
+    { icon: <SlackIcon />, value: slackMembersDisplay, label: "Slack Members" },
   ]
 
   return (
@@ -84,22 +96,27 @@ export function StatsBanner() {
 
             <div className="flex flex-wrap items-center gap-3">
               <Link
-                href="https://github.com/kikplate"
+                href={githubUrl}
                 target="_blank"
+                rel="noopener noreferrer"
                 className="group inline-flex items-center gap-1.5 border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
                 <Github className="h-4 w-4" />
                 View on GitHub
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <Link
-                href="#"
-                className="group inline-flex items-center gap-1.5 border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-              >
-                <SlackIcon />
-                Join Slack
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+              {slackUrl && (
+                <Link
+                  href={slackUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group inline-flex items-center gap-1.5 border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <SlackIcon />
+                  Join Slack
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              )}
             </div>
           </div>
 

@@ -17,7 +17,7 @@ The following tools must be installed before you begin:
 ## Clone the Repository
 
 ```
-git clone https://github.com/MoeidHeidari/kikplate.git
+git clone https://github.com/kikplate/kikplate.git
 cd kikplate
 ```
 

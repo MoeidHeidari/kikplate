@@ -13,7 +13,7 @@ Kikplate is a self hosted platform for discovering, sharing, and submitting star
 ## Install
 
 ```bash
-helm install kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
+helm install kikplate oci://ghcr.io/kikplate/helm-charts/kikplate \
   --namespace kikplate \
   --create-namespace
 ```
@@ -21,7 +21,7 @@ helm install kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
 ## Install With Required Secrets
 
 ```bash
-helm install kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
+helm install kikplate oci://ghcr.io/kikplate/helm-charts/kikplate \
   --namespace kikplate \
   --create-namespace \
   --set secrets.jwtSecret="$(openssl rand -base64 32)" \
@@ -31,7 +31,7 @@ helm install kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
 ## Upgrade
 
 ```bash
-helm upgrade kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
+helm upgrade kikplate oci://ghcr.io/kikplate/helm-charts/kikplate \
   --namespace kikplate
 ```
 
@@ -51,7 +51,7 @@ The following table lists the main configurable parameters and their default val
 | `fullnameOverride` | Optional full name override for generated resources | `""` |
 | `namespace` | Optional namespace override. Leave empty to use the Helm release namespace | `""` |
 | `api.replicaCount` | Number of backend replicas | `1` |
-| `api.image.repository` | Backend image repository | `ghcr.io/moeidheidari/kikplate-api` |
+| `api.image.repository` | Backend image repository | `ghcr.io/kikplate/kikplate-api` |
 | `api.image.tag` | Backend image tag | `main` |
 | `api.image.pullPolicy` | Backend image pull policy | `IfNotPresent` |
 | `api.service.port` | Backend service port | `3001` |
@@ -60,11 +60,11 @@ The following table lists the main configurable parameters and their default val
 | `api.resources.limits.cpu` | Backend CPU limit | `500m` |
 | `api.resources.limits.memory` | Backend memory limit | `512Mi` |
 | `sync.replicaCount` | Number of sync worker replicas | `1` |
-| `sync.image.repository` | Sync worker image repository | `ghcr.io/moeidheidari/kikplate-api` |
+| `sync.image.repository` | Sync worker image repository | `ghcr.io/kikplate/kikplate-api` |
 | `sync.image.tag` | Sync worker image tag | `main` |
 | `sync.image.pullPolicy` | Sync worker image pull policy | `IfNotPresent` |
 | `web.replicaCount` | Number of frontend replicas | `1` |
-| `web.image.repository` | Frontend image repository | `ghcr.io/moeidheidari/kikplate-web` |
+| `web.image.repository` | Frontend image repository | `ghcr.io/kikplate/kikplate-web` |
 | `web.image.tag` | Frontend image tag | `main` |
 | `web.image.pullPolicy` | Frontend image pull policy | `IfNotPresent` |
 | `web.service.port` | Frontend service port | `3000` |
@@ -91,7 +91,7 @@ The following table lists the main configurable parameters and their default val
 | `config.sync.batchSize` | Batch size for synchronization jobs | `25` |
 | `config.customization.logo` | Logo path used by the frontend | `/kikplate-logo-on-dark.svg` |
 | `config.customization.bannerTitle` | Main homepage banner title | `The Home of your starter boilerplates` |
-| `config.customization.badgeRequestUrl` | URL used for badge requests | `https://github.com/MoeidHeidari/kikplate/issues/new?template=badge-request.yml` |
+| `config.customization.badgeRequestUrl` | URL used for badge requests | `https://github.com/kikplate/kikplate/issues/new?template=badge-request.yml` |
 | `config.customization.socialMedia` | Social links shown in the UI | `github`, `slack`, `linkedin`, `x` entries |
 | `config.customization.preparedQueries` | Prepared search suggestions shown in the homepage search | See `values.yaml` |
 | `config.sso.providers` | OAuth provider definitions rendered into config | `github`, `google`, `gitlab` |

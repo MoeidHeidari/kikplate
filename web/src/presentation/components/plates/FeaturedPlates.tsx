@@ -137,7 +137,7 @@ export function FeaturedPlates() {
             </div>
             <div className="mt-6">
               <Link
-                href="https://github.com/MoeidHeidari/kikplate/tree/main/cli"
+                href="https://github.com/kikplate/kikplate/tree/main/cli"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"

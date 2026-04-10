@@ -9,26 +9,26 @@ keywords:
   - boilerplate
   - starter
   - templates
-home: https://github.com/MoeidHeidari/kikplate
+home: https://github.com/kikplate/kikplate
 sources:
-  - https://github.com/MoeidHeidari/kikplate
+  - https://github.com/kikplate/kikplate
 maintainers:
-  - name: MoeidHeidari
-    url: https://github.com/MoeidHeidari
+  - name: kikplate
+    url: https://github.com/kikplate
 annotations:
   artifacthub.io/license: MIT
   artifacthub.io/links: |
     - name: source
-      url: https://github.com/MoeidHeidari/kikplate
+      url: https://github.com/kikplate/kikplate
     - name: support
-      url: https://github.com/MoeidHeidari/kikplate/issues
+      url: https://github.com/kikplate/kikplate/issues
     - name: chart
-      url: https://github.com/MoeidHeidari/kikplate/tree/helm/helm
+      url: https://github.com/kikplate/kikplate/tree/helm/helm
   artifacthub.io/images: |
     - name: kikplate-api
-      image: ghcr.io/moeidheidari/kikplate-api:main
+      image: ghcr.io/kikplate/kikplate-api:main
     - name: kikplate-web
-      image: ghcr.io/moeidheidari/kikplate-web:main
+      image: ghcr.io/kikplate/kikplate-web:main
     - name: postgres
       image: postgres:16
-icon: https://raw.githubusercontent.com/MoeidHeidari/kikplate/main/web/public/kikplate-logo-on-dark.svg
+icon: https://raw.githubusercontent.com/kikplate/kikplate/main/web/public/kikplate-logo-on-dark.svg

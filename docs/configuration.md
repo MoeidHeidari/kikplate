@@ -179,7 +179,7 @@ UI customization applied to the web frontend. These values are served from `GET 
 customization:
   logo: /kikplate-logo-on-dark.svg
   banner_title: "The Home of your starter boilerplates"
-  badge_request_url: "https://github.com/MoeidHeidari/kikplate/issues/new?template=badge-request.yml"
+  badge_request_url: "https://github.com/kikplate/kikplate/issues/new?template=badge-request.yml"
   social_media:
     - type: github
       link: "https://github.com/yourorg"

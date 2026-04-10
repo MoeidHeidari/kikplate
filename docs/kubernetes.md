@@ -23,7 +23,7 @@ Kikplate deploys as four workloads:
 | `web` | Deployment | Next.js frontend |
 | `postgres` | Deployment | PostgreSQL with a PersistentVolumeClaim |
 
-The API and sync worker use the same container image (`ghcr.io/moeidheidari/kikplate-api`) but run different commands. Both mount the same ConfigMap and Secret.
+The API and sync worker use the same container image (`ghcr.io/kikplate/kikplate-api`) but run different commands. Both mount the same ConfigMap and Secret.
 
 ## Resource Overview
 
@@ -211,7 +211,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: ghcr.io/moeidheidari/kikplate-api:v1.2.0
+          image: ghcr.io/kikplate/kikplate-api:v1.2.0
 ```
 
 ## Health Checks
@@ -244,9 +244,9 @@ kubectl logs -n kikplate deploy/api -f
 To deploy a new image tag, update the image in the relevant deployment and apply:
 
 ```
-kubectl set image deployment/api api=ghcr.io/moeidheidari/kikplate-api:v1.3.0 -n kikplate
-kubectl set image deployment/sync sync=ghcr.io/moeidheidari/kikplate-api:v1.3.0 -n kikplate
-kubectl set image deployment/web web=ghcr.io/moeidheidari/kikplate-web:v1.3.0 -n kikplate
+kubectl set image deployment/api api=ghcr.io/kikplate/kikplate-api:v1.3.0 -n kikplate
+kubectl set image deployment/sync sync=ghcr.io/kikplate/kikplate-api:v1.3.0 -n kikplate
+kubectl set image deployment/web web=ghcr.io/kikplate/kikplate-web:v1.3.0 -n kikplate
 ```
 
 Or update your Kustomize overlay and re-apply.

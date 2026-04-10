@@ -1,6 +1,24 @@
+"use client"
+
 import Link from "next/link"
+import { useConfig } from "@/src/presentation/hooks/useConfig"
+import { getSocialLink } from "@/src/lib/socialLinks"
+
+const COMMUNITY = [
+  { label: "GitHub", type: "github" as const },
+  { label: "Slack", type: "slack" as const },
+  { label: "X", type: "x" as const },
+  { label: "LinkedIn", type: "linkedin" as const },
+]
 
 export function Footer() {
+  const { data: appConfig } = useConfig()
+
+  const communityLinks = COMMUNITY.map(({ label, type }) => ({
+    label,
+    href: getSocialLink(appConfig?.social_media, type),
+  })).filter((l): l is { label: string; href: string } => Boolean(l.href))
+
   return (
     <footer className="border-t border-border bg-background">
       <div className="container mx-auto px-4 py-12">
@@ -50,11 +68,7 @@ export function Footer() {
               Community
             </p>
             <ul className="space-y-2">
-              {[
-                { label: "GitHub", href: "https://github.com/kikplate" },
-                { label: "Slack", href: "#" },
-                { label: "Twitter / X", href: "#" },
-              ].map((link) => (
+              {communityLinks.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
@@ -74,26 +88,44 @@ export function Footer() {
               Resources
             </p>
             <ul className="space-y-2">
-              {[
-                { label: "Documentation", href: "#" },
-                { label: "CLI", href: "#" },
-                { label: "Changelog", href: "#" },
-                { label: "Contributing", href: "https://github.com/kikplate/kikplate/blob/main/CONTRIBUTING.md" },
-              ].map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link
+                  href="/docs"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Documentation
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/docs?doc=cli"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  CLI
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://github.com/kikplate/kikplate/releases"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Changelog
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://github.com/kikplate/kikplate/blob/main/CONTRIBUTING.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Contributing
+                </Link>
+              </li>
             </ul>
           </div>
-
         </div>
         <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
@@ -114,7 +146,6 @@ export function Footer() {
             ))}
           </div>
         </div>
-
       </div>
     </footer>
   )

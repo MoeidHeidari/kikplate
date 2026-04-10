@@ -476,9 +476,9 @@
 
             <div class="nav-links">
                 <a href="#install">Install</a>
-                <a href="https://github.com/MoeidHeidari/kikplate/tree/helm/helm" target="_blank" rel="noopener noreferrer">Chart</a>
+                <a href="https://github.com/kikplate/kikplate/tree/helm/helm" target="_blank" rel="noopener noreferrer">Chart</a>
                 <div class="divider" aria-hidden="true"></div>
-                <a href="https://github.com/MoeidHeidari/kikplate" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="https://github.com/kikplate/kikplate" target="_blank" rel="noopener noreferrer">GitHub</a>
             </div>
         </div>
     </nav>
@@ -503,7 +503,7 @@
                         <h2>Quick Install</h2>
                         <button class="copy-button" type="button" data-copy-target="quick-install">Copy</button>
                     </div>
-                    <pre id="quick-install">helm install kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
+                    <pre id="quick-install">helm install kikplate oci://ghcr.io/kikplate/helm-charts/kikplate \
   --namespace kikplate \
   --create-namespace</pre>
                 </div>
@@ -516,13 +516,13 @@
                     <div class="section-row">
                         <h3>1. Inspect available versions</h3>
                         <p>Query the OCI chart directly when you need a specific release.</p>
-                        <code class="inline-code">helm show chart oci://ghcr.io/moeidheidari/helm-charts/kikplate --version 0.1.1</code>
+                        <code class="inline-code">helm show chart oci://ghcr.io/kikplate/helm-charts/kikplate --version 0.1.1</code>
                     </div>
 
                     <div class="section-row">
                         <h3>2. Install with overrides</h3>
                         <p>Pass runtime secrets and install in one command.</p>
-                        <code class="inline-code">helm install kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
+                        <code class="inline-code">helm install kikplate oci://ghcr.io/kikplate/helm-charts/kikplate \
   --namespace kikplate \
   --create-namespace \
   --set secrets.jwtSecret=$(openssl rand -base64 32) \
@@ -540,15 +540,15 @@ kubectl port-forward -n kikplate svc/web 3000:3000</code>
                 <div class="section-block meta-grid">
                     <div class="meta-item">
                         <span class="meta-label">OCI</span>
-                        <div class="meta-value">oci://ghcr.io/moeidheidari/helm-charts/kikplate</div>
+                        <div class="meta-value">oci://ghcr.io/kikplate/helm-charts/kikplate</div>
                     </div>
                     <div class="meta-item">
                         <span class="meta-label">Chart Source</span>
-                        <div class="meta-value"><a href="https://github.com/MoeidHeidari/kikplate/tree/helm/helm" target="_blank" rel="noopener noreferrer">View chart files</a></div>
+                        <div class="meta-value"><a href="https://github.com/kikplate/kikplate/tree/helm/helm" target="_blank" rel="noopener noreferrer">View chart files</a></div>
                     </div>
                     <div class="meta-item">
                         <span class="meta-label">Configuration</span>
-                        <div class="meta-value"><a href="https://github.com/MoeidHeidari/kikplate/blob/helm/helm/values.yaml" target="_blank" rel="noopener noreferrer">Review values.yaml</a></div>
+                        <div class="meta-value"><a href="https://github.com/kikplate/kikplate/blob/helm/helm/values.yaml" target="_blank" rel="noopener noreferrer">Review values.yaml</a></div>
                     </div>
                 </div>
             </div>
@@ -564,8 +564,8 @@ kubectl port-forward -n kikplate svc/web 3000:3000</code>
                 </div>
                 <div class="footer-links">
                     <p class="footer-title">Project</p>
-                    <a href="https://github.com/MoeidHeidari/kikplate" target="_blank" rel="noopener noreferrer">Repository</a>
-                    <a href="https://github.com/MoeidHeidari/kikplate/issues" target="_blank" rel="noopener noreferrer">Issues</a>
+                    <a href="https://github.com/kikplate/kikplate" target="_blank" rel="noopener noreferrer">Repository</a>
+                    <a href="https://github.com/kikplate/kikplate/issues" target="_blank" rel="noopener noreferrer">Issues</a>
                 </div>
                 <div class="footer-links">
                     <p class="footer-title">Chart</p>

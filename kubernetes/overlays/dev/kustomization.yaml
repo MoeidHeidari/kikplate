@@ -3,10 +3,10 @@ kind: Kustomization
 resources:
   - ../../base
 images:
-  - name: ghcr.io/moeidheidari/kikplate-api
+  - name: ghcr.io/kikplate/kikplate-api
     newName: kikplate-api
     newTag: dev-local
-  - name: ghcr.io/moeidheidari/kikplate-web
+  - name: ghcr.io/kikplate/kikplate-web
     newName: kikplate-web
     newTag: dev-local-v2
 patches:

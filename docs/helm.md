@@ -18,7 +18,7 @@ Kikplate provides an official Helm chart that deploys the full stack — API, sy
 The chart is published to GHCR on every release. No repository registration needed:
 
 ```
-helm install kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
+helm install kikplate oci://ghcr.io/kikplate/helm-charts/kikplate \
   --namespace kikplate \
   --create-namespace
 ```
@@ -26,7 +26,7 @@ helm install kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
 With required secrets set at install time:
 
 ```
-helm install kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
+helm install kikplate oci://ghcr.io/kikplate/helm-charts/kikplate \
   --namespace kikplate \
   --create-namespace \
   --set secrets.jwtSecret="$(openssl rand -base64 32)" \
@@ -36,7 +36,7 @@ helm install kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
 ### From the Helm Repository
 
 ```
-helm repo add kikplate https://moeidheidari.github.io/kikplate
+helm repo add kikplate https://kikplate.github.io/kikplate
 helm repo update
 helm install kikplate kikplate/kikplate \
   --namespace kikplate \
@@ -46,7 +46,7 @@ helm install kikplate kikplate/kikplate \
 ## Upgrading
 
 ```
-helm upgrade kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
+helm upgrade kikplate oci://ghcr.io/kikplate/helm-charts/kikplate \
   --namespace kikplate
 ```
 
@@ -96,7 +96,7 @@ Optional namespace override. By default, Helm uses the namespace passed to `helm
 api:
   replicaCount: 1
   image:
-    repository: ghcr.io/moeidheidari/kikplate-api
+    repository: ghcr.io/kikplate/kikplate-api
     tag: main
     pullPolicy: IfNotPresent
   service:
@@ -116,7 +116,7 @@ api:
 sync:
   replicaCount: 1
   image:
-    repository: ghcr.io/moeidheidari/kikplate-api
+    repository: ghcr.io/kikplate/kikplate-api
     tag: main
     pullPolicy: IfNotPresent
   resources:
@@ -136,7 +136,7 @@ The sync worker uses the same image as the API server. The chart sets `args: ["a
 web:
   replicaCount: 1
   image:
-    repository: ghcr.io/moeidheidari/kikplate-web
+    repository: ghcr.io/kikplate/kikplate-web
     tag: main
     pullPolicy: IfNotPresent
   service:
@@ -242,7 +242,7 @@ config:
   customization:
     logo: /kikplate-logo-on-dark.svg
     bannerTitle: "The Home of your starter boilerplates"
-    badgeRequestUrl: "https://github.com/MoeidHeidari/kikplate/issues/new?template=badge-request.yml"
+    badgeRequestUrl: "https://github.com/kikplate/kikplate/issues/new?template=badge-request.yml"
 ```
 
 ## Production Values File Example
@@ -282,7 +282,7 @@ config:
 Install:
 
 ```
-helm install kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
+helm install kikplate oci://ghcr.io/kikplate/helm-charts/kikplate \
   --namespace kikplate \
   --create-namespace \
   -f production-values.yaml \
@@ -302,7 +302,7 @@ kubectl scale deployment -n kikplate -l app.kubernetes.io/component=web --replic
 Or pass updated replicas to `helm upgrade`:
 
 ```
-helm upgrade kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
+helm upgrade kikplate oci://ghcr.io/kikplate/helm-charts/kikplate \
   --namespace kikplate \
   --set api.replicaCount=3 \
   --set web.replicaCount=3
@@ -311,7 +311,7 @@ helm upgrade kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
 ## Viewing Chart Values
 
 ```
-helm show values oci://ghcr.io/moeidheidari/helm-charts/kikplate
+helm show values oci://ghcr.io/kikplate/helm-charts/kikplate
 ```
 
 ## Checking Deployment Status
@@ -327,7 +327,7 @@ kubectl rollout status deployment/kikplate-web -n kikplate
 Show rendered templates without installing:
 
 ```
-helm template kikplate oci://ghcr.io/moeidheidari/helm-charts/kikplate \
+helm template kikplate oci://ghcr.io/kikplate/helm-charts/kikplate \
   --namespace kikplate \
   -f production-values.yaml
 ```

@@ -269,10 +269,10 @@ func NewEnv() Env {
 
 	if len(env.Customization.SocialMedia) == 0 {
 		env.Customization.SocialMedia = []SocialMediaLink{
-			{Type: "github", Link: "https://github.com/kickplate"},
-			{Type: "slack", Link: "#"},
-			{Type: "linkedin", Link: "#"},
-			{Type: "x", Link: "#"},
+			{Type: "github", Link: "https://github.com/kikplate/kikplate"},
+			{Type: "slack", Link: ""},
+			{Type: "linkedin", Link: "https://www.linkedin.com/company/kikplate"},
+			{Type: "x", Link: "https://x.com/kikplate"},
 		}
 	}
 

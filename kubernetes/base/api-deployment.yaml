@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: ghcr.io/moeidheidari/kikplate-api:latest
+          image: ghcr.io/kikplate/kikplate-api:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3001
