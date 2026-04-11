@@ -6,8 +6,33 @@ import { usePlates, useRemovePlate, useMovePlateOrganization } from "@/src/prese
 import { useMyOrganizations } from "@/src/presentation/hooks/useOrganizations"
 import { LoadingSpinner } from "@/src/presentation/components/common/LoadingSpinner"
 import { PendingVerification } from "@/src/presentation/components/plates/PendingVerification"
+import { PlateGetBadgeModal } from "@/src/presentation/components/account/PlateGetBadgeModal"
 import { Button } from "@/components/ui/button"
-import { GitBranch, Plus, Trash2, Key, ChevronDown, Copy, Check } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import type { Plate } from "@/src/domain/entities/Plate"
+import {
+  Building2,
+  Code2,
+  Copy,
+  GitBranch,
+  MoreVertical,
+  Plus,
+  Trash2,
+} from "lucide-react"
 import { toast } from "sonner"
 
 export function OwnedPlates({ accountId }: { accountId: string }) {
@@ -25,12 +50,12 @@ export function OwnedPlates({ accountId }: { accountId: string }) {
     targetOrgName: string
   } | null>(null)
   const [moveError, setMoveError] = useState<string | null>(null)
-  const [visibleTokenIds, setVisibleTokenIds] = useState<Set<string>>(new Set())
-  const [tokenCopiedId, setTokenCopiedId] = useState<string | null>(null)
   const [confirmingPlate, setConfirmingPlate] = useState<{ id: string; name: string } | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
   const [confirmNameInput, setConfirmNameInput] = useState("")
   const [moveConfirmNameInput, setMoveConfirmNameInput] = useState("")
+  const [getBadgePlate, setGetBadgePlate] = useState<Plate | null>(null)
+  const [orgDialogPlate, setOrgDialogPlate] = useState<Plate | null>(null)
 
   const canRemove = Boolean(confirmingPlate && confirmNameInput === confirmingPlate.name)
   const canMove = Boolean(confirmingMove && moveConfirmNameInput === confirmingMove.plateName)
@@ -65,6 +90,7 @@ export function OwnedPlates({ accountId }: { accountId: string }) {
       }))
       setConfirmingMove(null)
       setMoveConfirmNameInput("")
+      setOrgDialogPlate((p) => (p?.id === confirmingMove.plateId ? null : p))
     } catch (error) {
       setMoveError(error instanceof Error ? error.message : "Failed to move plate")
     } finally {
@@ -144,14 +170,26 @@ export function OwnedPlates({ accountId }: { accountId: string }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {publishedPlates.map((plate) => (
-            <div key={plate.id} className="rounded-xl border border-border bg-card p-4">
-              <div className="space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <Link href={`/plates/${plate.slug}`} className="line-clamp-1 text-sm font-semibold hover:underline">
+            {publishedPlates.map((plate) => {
+              const organizationLabel =
+                plate.organization?.name ??
+                (plate.organization_id
+                  ? organizations.find((o) => o.id === plate.organization_id)?.name
+                  : undefined)
+
+              return (
+            <div key={plate.id} className="group relative rounded-xl border border-border bg-card p-4">
+              <Link
+                href={`/plates/${encodeURIComponent(plate.slug)}`}
+                className="absolute inset-0 z-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
+                aria-label={`Open plate: ${plate.name}`}
+              />
+              <div className="relative z-10 space-y-2 pointer-events-none">
+                <div className="flex items-start gap-2">
+                  <span className="min-w-0 flex-1 line-clamp-2 text-sm font-semibold leading-snug group-hover:underline">
                     {plate.name}
-                  </Link>
-                  <div className="flex shrink-0 items-center gap-1.5">
+                  </span>
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
                     <span className={`inline-flex items-center border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${visibilityBadgeClass(plate.visibility)}`}>
                       {plate.visibility}
                     </span>
@@ -165,6 +203,60 @@ export function OwnedPlates({ accountId }: { accountId: string }) {
                         Unverified
                       </span>
                     )}
+                    <div className="pointer-events-auto">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-none border border-transparent text-muted-foreground outline-none transition-colors hover:border-border hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50">
+                        <MoreVertical className="h-4 w-4" />
+                        <span className="sr-only">Plate actions</span>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          className="cursor-pointer gap-2"
+                          onClick={() => setGetBadgePlate(plate)}
+                        >
+                          <Code2 className="h-4 w-4" />
+                          Get badge
+                        </DropdownMenuItem>
+                        {plate.verification_token ? (
+                          <DropdownMenuItem
+                            className="cursor-pointer gap-2"
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(plate.verification_token!)
+                                toast.success("Verification token copied")
+                              } catch {
+                                toast.error("Could not copy")
+                              }
+                            }}
+                          >
+                            <Copy className="h-4 w-4" />
+                            Copy verification token
+                          </DropdownMenuItem>
+                        ) : null}
+                        <DropdownMenuItem
+                          className="cursor-pointer gap-2"
+                          onClick={() => setOrgDialogPlate(plate)}
+                        >
+                          <Building2 className="h-4 w-4" />
+                          Organization…
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          className="cursor-pointer gap-2"
+                          disabled={removePlate.isPending && removingId === plate.id}
+                          onClick={() => {
+                            setConfirmingPlate({ id: plate.id, name: plate.name })
+                            setConfirmNameInput("")
+                            setRemoveError(null)
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          {removePlate.isPending && removingId === plate.id ? "Removing…" : "Remove"}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    </div>
                   </div>
                 </div>
                 {plate.description ? (
@@ -191,122 +283,18 @@ export function OwnedPlates({ accountId }: { accountId: string }) {
                 )}
               </div>
 
-              <div className="mt-4 flex items-center justify-between gap-2">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{plate.category}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConfirmingPlate({ id: plate.id, name: plate.name })
-                    setConfirmNameInput("")
-                    setRemoveError(null)
-                  }}
-                  disabled={removePlate.isPending && removingId === plate.id}
-                  className="inline-flex items-center gap-1 rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive transition-colors hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  {removePlate.isPending && removingId === plate.id ? "Removing..." : "Remove"}
-                </button>
-              </div>
-
-              {plate.verification_token && (
-                <div className="mt-3 border-t border-border pt-3 space-y-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setVisibleTokenIds((prev) => {
-                        const next = new Set(prev)
-                        if (next.has(plate.id)) next.delete(plate.id)
-                        else next.add(plate.id)
-                        return next
-                      })
-                    }
-                    className="flex w-full items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    <Key className="h-3 w-3" />
-                    <span className="flex-1 text-left">Verification token</span>
-                    <ChevronDown
-                      className={`h-3 w-3 transition-transform ${
-                        visibleTokenIds.has(plate.id) ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-                  {visibleTokenIds.has(plate.id) && (
-                    <div className="flex items-center gap-0 border border-border">
-                      <code className="flex-1 truncate bg-muted/20 px-3 py-2 text-[11px] font-mono text-foreground">
-                        {plate.verification_token}
-                      </code>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await navigator.clipboard.writeText(plate.verification_token!)
-                          setTokenCopiedId(plate.id)
-                          toast.success("Token copied to clipboard")
-                          setTimeout(() => setTokenCopiedId(null), 2000)
-                        }}
-                        className="border-l border-border px-3 py-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      >
-                        {tokenCopiedId === plate.id
-                          ? <Check className="h-3.5 w-3.5 text-green-500" />
-                          : <Copy className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="mt-3 space-y-2 border-t border-border pt-3">
-                <label className="text-[11px] uppercase tracking-wide text-muted-foreground">Organization</label>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={selectedOrgByPlate[plate.id] ?? (plate.organization_id ?? "")}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      setSelectedOrgByPlate((prev) => ({ ...prev, [plate.id]: value }))
-                    }}
-                    className="h-8 flex-1 border border-input bg-transparent px-2 text-xs outline-none transition-colors focus:border-ring"
-                    disabled={orgsLoading || (movePlateOrganization.isPending && movingId === plate.id)}
-                  >
-                    <option value="">Personal (no organization)</option>
-                    {organizations.map((org) => (
-                      <option key={org.id} value={org.id}>
-                        {org.name}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      const currentOrgId = plate.organization_id ?? ""
-                      const selectedOrgId = selectedOrgByPlate[plate.id] ?? currentOrgId
-
-                      if (selectedOrgId === currentOrgId) {
-                        setMoveError("Select a different organization before moving this plate")
-                        return
-                      }
-
-                      const targetOrgName = selectedOrgId === ""
-                        ? "Personal (no organization)"
-                        : (organizations.find((org) => org.id === selectedOrgId)?.name ?? "selected organization")
-
-                      setMoveError(null)
-                      setMoveConfirmNameInput("")
-                      setConfirmingMove({
-                        plateId: plate.id,
-                        plateName: plate.name,
-                        targetOrgId: selectedOrgId,
-                        targetOrgName,
-                      })
-                    }}
-                    disabled={orgsLoading || (movePlateOrganization.isPending && movingId === plate.id)}
-                  >
-                    {movePlateOrganization.isPending && movingId === plate.id ? "Moving..." : "Move"}
-                  </Button>
-                </div>
-              </div>
+              <p className="relative z-10 mt-4 text-[11px] uppercase tracking-wide text-muted-foreground pointer-events-none">
+                {plate.category}
+              </p>
+              {organizationLabel ? (
+                <p className="relative z-10 mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground pointer-events-none">
+                  <Building2 className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+                  <span className="min-w-0 truncate font-medium text-foreground/90">{organizationLabel}</span>
+                </p>
+              ) : null}
             </div>
-          ))}
+              )
+            })}
         </div>
       )}
       </div>
@@ -360,6 +348,81 @@ export function OwnedPlates({ accountId }: { accountId: string }) {
           </div>
         </div>
       )}
+
+      <Dialog open={Boolean(orgDialogPlate)} onOpenChange={(open) => { if (!open) setOrgDialogPlate(null) }}>
+        <DialogContent className="sm:max-w-md">
+          {orgDialogPlate ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Organization</DialogTitle>
+                <DialogDescription>
+                  Move &quot;{orgDialogPlate.name}&quot; between your personal namespace and an organization you manage.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2 py-1">
+                <label htmlFor={`org-select-${orgDialogPlate.id}`} className="text-xs text-muted-foreground">
+                  Organization
+                </label>
+                <select
+                  id={`org-select-${orgDialogPlate.id}`}
+                  value={selectedOrgByPlate[orgDialogPlate.id] ?? (orgDialogPlate.organization_id ?? "")}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setSelectedOrgByPlate((prev) => ({ ...prev, [orgDialogPlate.id]: value }))
+                  }}
+                  className="h-9 w-full border border-input bg-transparent px-2 text-sm outline-none transition-colors focus:border-ring"
+                  disabled={orgsLoading || (movePlateOrganization.isPending && movingId === orgDialogPlate.id)}
+                >
+                  <option value="">Personal (no organization)</option>
+                  {organizations.map((org) => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <DialogFooter className="gap-2 sm:justify-end">
+                <Button type="button" variant="outline" size="sm" onClick={() => setOrgDialogPlate(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={orgsLoading || (movePlateOrganization.isPending && movingId === orgDialogPlate.id)}
+                  onClick={() => {
+                    const p = orgDialogPlate
+                    const currentOrgId = p.organization_id ?? ""
+                    const selectedOrgId = selectedOrgByPlate[p.id] ?? currentOrgId
+
+                    if (selectedOrgId === currentOrgId) {
+                      setMoveError("Select a different organization before moving this plate")
+                      return
+                    }
+
+                    const targetOrgName = selectedOrgId === ""
+                      ? "Personal (no organization)"
+                      : (organizations.find((org) => org.id === selectedOrgId)?.name ?? "selected organization")
+
+                    setMoveError(null)
+                    setMoveConfirmNameInput("")
+                    setOrgDialogPlate(null)
+                    setConfirmingMove({
+                      plateId: p.id,
+                      plateName: p.name,
+                      targetOrgId: selectedOrgId,
+                      targetOrgName,
+                    })
+                  }}
+                >
+                  {movePlateOrganization.isPending && movingId === orgDialogPlate.id ? "Moving…" : "Move"}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <PlateGetBadgeModal plate={getBadgePlate} onClose={() => setGetBadgePlate(null)} />
 
       {confirmingPlate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

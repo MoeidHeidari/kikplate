@@ -1,9 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Copy, Check, AlertCircle, RotateCw, Trash2 } from "lucide-react"
+import { Copy, Check, AlertCircle, MoreVertical, RotateCw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import type { Plate } from "@/src/domain/entities/Plate"
 import { useVerifyRepository } from "@/src/presentation/hooks/usePlates"
 
@@ -44,12 +50,33 @@ export function PendingVerification({ plate, onRemove, removing = false }: Props
     <div className="space-y-4 rounded-lg border border-amber-300/40 bg-amber-50/50 p-4 dark:border-amber-400/30 dark:bg-amber-950/20">
       <div className="flex items-start gap-3">
         <AlertCircle className="mt-0.5 h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
-        <div className="flex-1 space-y-3">
-          <div>
-            <p className="font-semibold text-amber-900 dark:text-amber-100">Verification Pending</p>
-            <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
-              To publish this plate, add the verification token to your kikplate.yaml and push it to the repository.
-            </p>
+        <div className="min-w-0 flex-1 space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="font-semibold text-amber-900 dark:text-amber-100">Verification Pending</p>
+              <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
+                To publish this plate, add the verification token to your kikplate.yaml and push it to the repository.
+              </p>
+            </div>
+            {onRemove ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-none border border-transparent text-amber-800 outline-none transition-colors hover:border-amber-400/50 hover:bg-amber-100/60 hover:text-amber-950 focus-visible:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/40 dark:text-amber-200 dark:hover:bg-amber-950/40 dark:hover:text-amber-50">
+                  <MoreVertical className="h-4 w-4" />
+                  <span className="sr-only">Pending plate actions</span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    className="cursor-pointer gap-2"
+                    disabled={removing}
+                    onClick={() => onRemove(plate)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {removing ? "Removing…" : "Remove plate"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -83,19 +110,6 @@ export function PendingVerification({ plate, onRemove, removing = false }: Props
                 {verifyMutation.isPending && <RotateCw className="h-4 w-4 animate-spin" />}
                 {verifyMutation.isPending ? "Verifying..." : "Retry Verification"}
               </Button>
-              {onRemove && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => onRemove(plate)}
-                  disabled={removing}
-                  className="gap-2"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {removing ? "Removing..." : "Remove Plate"}
-                </Button>
-              )}
             </div>
           </div>
 

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { OAuthButton } from "./OAuthButton"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
+import { ApiError } from "@/src/data/repositories/httpClient"
 
 export function LoginForm() {
   const router = useRouter()
@@ -27,6 +28,17 @@ export function LoginForm() {
       router.push("/")
       router.refresh()
     } catch (err: unknown) {
+      if (
+        err instanceof ApiError &&
+        err.isForbidden() &&
+        err.message.toLowerCase().includes("email")
+      ) {
+        toast.error("Email not verified yet", {
+          description:
+            "Use the link in your inbox from when you signed up. After that, email and password sign-in will work.",
+        })
+        return
+      }
       toast.error(err instanceof Error ? err.message : "Login failed")
     }
   }

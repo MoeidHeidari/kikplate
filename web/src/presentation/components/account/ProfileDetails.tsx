@@ -32,6 +32,10 @@ interface Row {
   copyable?: string
 }
 
+function oauthOrTrustedProvider(provider: string): boolean {
+  return provider !== "local"
+}
+
 export function ProfileDetails({ me }: { me: MeResult }) {
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -70,18 +74,19 @@ export function ProfileDetails({ me }: { me: MeResult }) {
           value: <span className="text-sm capitalize">{me.role}</span>,
         }
       : null,
-    me.is_active !== undefined
+    oauthOrTrustedProvider(me.provider) || me.is_active !== undefined
       ? {
           label: "Email verified",
-          value: me.is_active ? (
-            <span className="flex items-center gap-1 text-sm text-green-600">
-              <CheckCircle2 className="h-3.5 w-3.5" /> Verified
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 text-sm text-destructive">
-              <XCircle className="h-3.5 w-3.5" /> Not verified
-            </span>
-          ),
+          value:
+            oauthOrTrustedProvider(me.provider) || me.is_active === true ? (
+              <span className="flex items-center gap-1 text-sm text-green-600">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Verified
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-sm text-destructive">
+                <XCircle className="h-3.5 w-3.5" /> Not verified
+              </span>
+            ),
         }
       : null,
   ].filter(Boolean) as Row[]

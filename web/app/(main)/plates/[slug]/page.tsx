@@ -297,14 +297,6 @@ export default async function PlateDetailPage({ params }: Props) {
               ) : null}
             </div>
 
-            {relatedPlates.length > 0 && relatedExploreHref ? (
-              <RelatedPlates
-                plates={relatedPlates}
-                exploreHref={relatedExploreHref}
-                exploreLabel={relatedExploreLabel}
-              />
-            ) : null}
-
             <BadgeShowcase
               allBadges={allBadges}
               plateBadges={plate.badges ?? []}
@@ -334,6 +326,14 @@ export default async function PlateDetailPage({ params }: Props) {
                 )}
               </div>
             )}
+
+            {relatedPlates.length > 0 && relatedExploreHref ? (
+              <RelatedPlates
+                plates={relatedPlates}
+                exploreHref={relatedExploreHref}
+                exploreLabel={relatedExploreLabel}
+              />
+            ) : null}
 
           </aside>
         </div>
