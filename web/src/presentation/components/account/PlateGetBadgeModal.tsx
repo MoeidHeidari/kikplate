@@ -17,8 +17,14 @@ function buildBadgeSnippets(plate: Plate) {
   const origin = typeof window !== "undefined" ? window.location.origin : ""
   const platePath = `/plates/${encodeURIComponent(plate.slug)}`
   const plateUrl = `${origin}${platePath}`
-  const shieldLabel = encodeURIComponent(plate.slug)
-  const shieldUrl = `https://img.shields.io/badge/KikPlate-${shieldLabel}-0366d6?style=flat-square`
+  // Use static/v1 query params so slugs with hyphens are not parsed as extra /badge/ path segments (which yields shields "404 badge not found").
+  const qs = new URLSearchParams({
+    label: "KikPlate",
+    message: plate.slug,
+    color: "0366d6",
+    style: "flat-square",
+  })
+  const shieldUrl = `https://img.shields.io/static/v1?${qs.toString()}`
   const markdown = `[![View on KikPlate](${shieldUrl})](${plateUrl})`
   const asciidoc = `image:${shieldUrl}[View on KikPlate,link="${plateUrl}"]`
   return { plateUrl, shieldUrl, markdown, asciidoc }
@@ -104,10 +110,10 @@ export function PlateGetBadgeModal({
                   href={snippets.plateUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center"
+                  className="inline-flex items-center overflow-hidden rounded-md"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={snippets.shieldUrl} alt="View on KikPlate" className="max-w-full" />
+                  <img src={snippets.shieldUrl} alt="View on KikPlate" className="block max-w-full" />
                 </a>
               </div>
             </div>
