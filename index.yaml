@@ -18,8 +18,47 @@ entries:
         - name: chart
           url: https://github.com/kikplate/kikplate/tree/helm/helm
     apiVersion: v2
+    appVersion: v0.7.0
+    created: "2026-04-12T20:31:27.955762117Z"
+    description: Kikplate – the home of your starter boilerplates. A self-hosted platform
+      for discovering, sharing, and submitting project templates.
+    digest: f5628157d94d70a5d70011e4952866f5b066d2a4a172f10beff875fb2eab59a8
+    home: https://github.com/kikplate/kikplate
+    icon: https://raw.githubusercontent.com/kikplate/kikplate/main/web/public/kikplate-logo-on-dark.svg
+    keywords:
+    - kikplate
+    - boilerplate
+    - starter
+    - templates
+    maintainers:
+    - name: kikplate
+      url: https://github.com/kikplate
+    name: kikplate
+    sources:
+    - https://github.com/kikplate/kikplate
+    type: application
+    urls:
+    - https://kikplate.github.io/kikplate/charts/kikplate-0.7.0.tgz
+    version: 0.7.0
+  - annotations:
+      artifacthub.io/images: |
+        - name: kikplate-api
+          image: ghcr.io/kikplate/kikplate-api:main
+        - name: kikplate-web
+          image: ghcr.io/kikplate/kikplate-web:main
+        - name: postgres
+          image: postgres:16
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: source
+          url: https://github.com/kikplate/kikplate
+        - name: support
+          url: https://github.com/kikplate/kikplate/issues
+        - name: chart
+          url: https://github.com/kikplate/kikplate/tree/helm/helm
+    apiVersion: v2
     appVersion: v0.6.0
-    created: "2026-04-11T20:37:02.108432524Z"
+    created: "2026-04-12T20:31:27.95456685Z"
     description: Kikplate – the home of your starter boilerplates. A self-hosted platform
       for discovering, sharing, and submitting project templates.
     digest: bff545936c61759f5790c51baa6a21c3e1066ebb714a686e58a651b7d996e162
@@ -58,7 +97,7 @@ entries:
           url: https://github.com/kikplate/kikplate/tree/helm/helm
     apiVersion: v2
     appVersion: v0.1.1
-    created: "2026-04-11T20:37:02.106679715Z"
+    created: "2026-04-12T20:31:27.953504641Z"
     description: Kikplate – the home of your starter boilerplates. A self-hosted platform
       for discovering, sharing, and submitting project templates.
     digest: dba78faa4d1f8d2a3e58ce7c323a1a2b5e79e42db434d09ba8e66809605361ea
@@ -81,7 +120,7 @@ entries:
     version: 0.1.1
   - apiVersion: v2
     appVersion: latest
-    created: "2026-04-11T20:37:02.105532399Z"
+    created: "2026-04-12T20:31:27.952409641Z"
     description: Kikplate – the home of your starter boilerplates. A self-hosted platform
       for discovering, sharing, and submitting project templates.
     digest: 68a9ab49d732032e4c910dff3a5718c02559694a84865bc8ea700b7254af68cd
@@ -102,4 +141,4 @@ entries:
     urls:
     - https://kikplate.github.io/kikplate/charts/kikplate-0.1.0.tgz
     version: 0.1.0
-generated: "2026-04-11T20:37:02.104427784Z"
+generated: "2026-04-12T20:31:27.951164261Z"
