@@ -83,9 +83,15 @@ export interface PlateListResponse {
   total: number
 }
 
+export interface PlateBadgeFilterOption {
+  slug: string
+  name: string
+}
+
 export interface PlateFilterOptions {
   categories: string[]
   tags: string[]
+  badges: PlateBadgeFilterOption[]
 }
 
 export interface PlateFilter {
@@ -95,6 +101,8 @@ export interface PlateFilter {
   categories?: string[]
   tag?: string
   tags?: string[]
+  badge?: string
+  badges?: string[]
   search?: string
   owner_id?: string
   organization_id?: string

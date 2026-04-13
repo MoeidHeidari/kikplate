@@ -71,6 +71,9 @@ func (r *plateRepository) List(ctx context.Context, filter repository.PlateFilte
 	if filter.OrganizationID != nil {
 		q = q.Where("organization_id = ?", *filter.OrganizationID)
 	}
+	if filter.OwnerID == nil {
+		q = q.Where("visibility = ?", model.PlateVisibilityPublic)
+	}
 	if filter.Search != "" {
 		q = q.Where(
 			`search_vector @@ websearch_to_tsquery('english', ?)
@@ -87,6 +90,12 @@ func (r *plateRepository) List(ctx context.Context, filter repository.PlateFilte
 		q = q.Joins("JOIN plate_tag ON plate_tag.plate_id = plate.id").
 			Where("plate_tag.tag IN ?", filter.Tags).
 			Group("plate.id")
+	}
+	if len(filter.Badges) > 0 {
+		q = q.Where(
+			`plate.id IN (SELECT pb.plate_id FROM plate_badge pb INNER JOIN badge b ON b.id = pb.badge_id WHERE b.slug IN ?)`,
+			filter.Badges,
+		)
 	}
 
 	q.Count(&total)
@@ -258,9 +267,30 @@ func (r *plateRepository) GetFilterOptions(ctx context.Context) (*repository.Pla
 		return nil, err
 	}
 
+	var badgeRows []struct {
+		Slug string `gorm:"column:slug"`
+		Name string `gorm:"column:name"`
+	}
+	if err := r.db.WithContext(ctx).
+		Table("badge").
+		Select("DISTINCT badge.slug, badge.name").
+		Joins("INNER JOIN plate_badge ON plate_badge.badge_id = badge.id").
+		Order("badge.name ASC").
+		Scan(&badgeRows).Error; err != nil {
+		return nil, err
+	}
+	badges := make([]repository.BadgeOption, 0, len(badgeRows))
+	for _, row := range badgeRows {
+		if row.Slug == "" {
+			continue
+		}
+		badges = append(badges, repository.BadgeOption{Slug: row.Slug, Name: row.Name})
+	}
+
 	return &repository.PlateFilterOptions{
 		Categories: categories,
 		Tags:       tags,
+		Badges:     badges,
 	}, nil
 }
 

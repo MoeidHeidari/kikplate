@@ -2,16 +2,21 @@
 
 import { useState } from "react"
 import { Search, X } from "lucide-react"
+import type { PlateBadgeFilterOption } from "@/src/domain/entities/Plate"
 
 interface Props {
   search: string
   onSearch: (v: string) => void
+  onClearAll: () => void
   activeCategories: string[]
   onCategories: (cats: string[]) => void
   activeTags: string[]
   onTags: (tags: string[]) => void
+  activeBadges: string[]
+  onBadges: (slugs: string[]) => void
   categories: string[]
   tags: string[]
+  badges: PlateBadgeFilterOption[]
 }
 
 function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) {
@@ -37,6 +42,117 @@ function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: ()
         {label}
       </span>
     </button>
+  )
+}
+
+function BadgesDropdown({
+  activeBadges,
+  onBadges,
+  searchTerm,
+  setSearchTerm,
+  badges,
+}: {
+  activeBadges: string[]
+  onBadges: (slugs: string[]) => void
+  searchTerm: string
+  setSearchTerm: (s: string) => void
+  badges: PlateBadgeFilterOption[]
+}) {
+  const filtered = badges.filter((b) =>
+    b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    b.slug.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center border border-border px-2 gap-1.5 focus-within:border-ring transition-colors">
+        <Search className="h-3 w-3 text-muted-foreground shrink-0" />
+        <input
+          type="text"
+          placeholder="Search badges..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="h-7 w-full bg-transparent text-xs outline-none placeholder:text-muted-foreground"
+        />
+      </div>
+      <div className="space-y-0">
+        {filtered.length === 0 ? (
+          <p className="text-xs text-muted-foreground px-1 py-1.5">No badges found</p>
+        ) : (
+          filtered.map((b) => (
+            <Checkbox
+              key={b.slug}
+              checked={activeBadges.includes(b.slug)}
+              onChange={() => {
+                if (activeBadges.includes(b.slug)) {
+                  onBadges(activeBadges.filter((s) => s !== b.slug))
+                } else {
+                  onBadges([...activeBadges, b.slug])
+                }
+              }}
+              label={b.name}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+function CategoriesDropdown({
+  activeCategories,
+  onCategories,
+  searchTerm,
+  setSearchTerm,
+  categories,
+}: {
+  activeCategories: string[]
+  onCategories: (cats: string[]) => void
+  searchTerm: string
+  setSearchTerm: (s: string) => void
+  categories: string[]
+}) {
+  const filtered = categories.filter((cat) =>
+    cat.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  function toggleCategory(cat: string) {
+    if (activeCategories.includes(cat)) {
+      onCategories(activeCategories.filter((c) => c !== cat))
+    } else {
+      onCategories([...activeCategories, cat])
+    }
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center border border-border px-2 gap-1.5 focus-within:border-ring transition-colors">
+        <Search className="h-3 w-3 text-muted-foreground shrink-0" />
+        <input
+          type="text"
+          placeholder="Search categories..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="h-7 w-full bg-transparent text-xs outline-none placeholder:text-muted-foreground"
+        />
+      </div>
+      <div className="space-y-0">
+        {categories.length === 0 ? (
+          <p className="text-xs text-muted-foreground px-1 py-1.5">No categories available.</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-xs text-muted-foreground px-1 py-1.5">No categories found</p>
+        ) : (
+          filtered.map((cat) => (
+            <Checkbox
+              key={cat}
+              checked={activeCategories.includes(cat)}
+              onChange={() => toggleCategory(cat)}
+              label={cat}
+            />
+          ))
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -94,26 +210,26 @@ function TagsDropdown({
 export function PlateFilters({
   search,
   onSearch,
+  onClearAll,
   activeCategories,
   onCategories,
   activeTags,
   onTags,
+  activeBadges,
+  onBadges,
   categories,
   tags,
+  badges,
 }: Props) {
   const [tagSearch, setTagSearch] = useState("")
-
-  function toggleCategory(cat: string) {
-    if (activeCategories.includes(cat)) {
-      onCategories(activeCategories.filter((c) => c !== cat))
-    } else {
-      onCategories([...activeCategories, cat])
-    }
-  }
+  const [badgeSearch, setBadgeSearch] = useState("")
+  const [categorySearch, setCategorySearch] = useState("")
 
   const hasActiveFilters =
+    search.trim() !== "" ||
     activeCategories.length > 0 ||
-    activeTags.length > 0
+    activeTags.length > 0 ||
+    activeBadges.length > 0
 
   return (
     <div className="space-y-5">
@@ -134,15 +250,28 @@ export function PlateFilters({
 
       {hasActiveFilters && (
         <button
-          onClick={() => {
-            onCategories([])
-            onTags([])
-          }}
+          type="button"
+          onClick={onClearAll}
           className="w-full text-left text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
         >
           <X className="h-3 w-3" /> Clear all filters
         </button>
       )}
+
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">Badges</p>
+        {badges.length === 0 ? (
+          <p className="text-xs text-muted-foreground px-1 py-1.5">No badges available.</p>
+        ) : (
+          <BadgesDropdown
+            activeBadges={activeBadges}
+            onBadges={onBadges}
+            searchTerm={badgeSearch}
+            setSearchTerm={setBadgeSearch}
+            badges={badges}
+          />
+        )}
+      </div>
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">Tags</p>
@@ -157,16 +286,13 @@ export function PlateFilters({
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">Category</p>
-        <div className="space-y-0">
-          {categories.map((cat) => (
-            <Checkbox
-              key={cat}
-              checked={activeCategories.includes(cat)}
-              onChange={() => toggleCategory(cat)}
-              label={cat}
-            />
-          ))}
-        </div>
+        <CategoriesDropdown
+          activeCategories={activeCategories}
+          onCategories={onCategories}
+          searchTerm={categorySearch}
+          setSearchTerm={setCategorySearch}
+          categories={categories}
+        />
       </div>
     </div>
   )

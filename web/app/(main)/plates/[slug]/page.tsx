@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import {
   GitBranch, FileText, Heart, Star,
-  Tag, CheckCircle2, Calendar,
+  Tag, CheckCircle2, Calendar, CalendarCheck, Layers,
   ExternalLink, ArrowLeft
 } from "lucide-react"
 import { fetchRepoFile, fetchRepoReadme, fetchRepoTree } from "@/src/data/repositories/githubClient"
@@ -262,12 +262,16 @@ export default async function PlateDetailPage({ params }: Props) {
                   <span className="font-semibold capitalize text-foreground">{plate.type}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Category</span>
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <Layers className="h-3.5 w-3.5 shrink-0" /> Category
+                  </span>
                   <span className="font-semibold capitalize text-foreground">{plate.category}</span>
                 </div>
                 {plate.published_at && (
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Published</span>
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <CalendarCheck className="h-3.5 w-3.5 shrink-0" /> Published
+                    </span>
                     <span className="font-semibold text-foreground">{relativeTime(plate.published_at)}</span>
                   </div>
                 )}

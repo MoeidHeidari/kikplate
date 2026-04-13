@@ -510,6 +510,16 @@ paths:
           schema:
             type: string
         - in: query
+          name: badges
+          schema:
+            type: string
+          description: Comma-separated badge slugs (alias query key `badge`)
+        - in: query
+          name: badge
+          schema:
+            type: string
+          description: Badge slug(s); comma-separated allowed
+        - in: query
           name: owner_id
           schema:
             type: string

@@ -12,6 +12,7 @@ type PlateFilter struct {
 	Types          []model.PlateType
 	Categories     []string
 	Tags           []string
+	Badges         []string
 	OwnerID        *uuid.UUID
 	OrganizationID *uuid.UUID
 	Search         string
@@ -55,9 +56,15 @@ type PlateRanked struct {
 	Category      string    `json:"category"`
 }
 
+type BadgeOption struct {
+	Slug string `json:"slug"`
+	Name string `json:"name"`
+}
+
 type PlateFilterOptions struct {
-	Categories []string `json:"categories"`
-	Tags       []string `json:"tags"`
+	Categories []string      `json:"categories"`
+	Tags       []string      `json:"tags"`
+	Badges     []BadgeOption `json:"badges"`
 }
 type UserRepository interface {
 	Create(ctx context.Context, user *model.User) error

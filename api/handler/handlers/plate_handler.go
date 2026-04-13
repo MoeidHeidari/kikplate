@@ -215,6 +215,14 @@ func (h PlateHandler) List(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	for _, key := range []string{"badges", "badge"} {
+		for _, b := range q[key] {
+			for _, part := range splitComma(b) {
+				filter.Badges = append(filter.Badges, part)
+			}
+		}
+	}
+
 	if ownerID := q.Get("owner_id"); ownerID != "" {
 		if id, err := uuid.Parse(ownerID); err == nil {
 			filter.OwnerID = &id

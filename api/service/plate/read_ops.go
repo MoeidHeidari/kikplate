@@ -88,13 +88,8 @@ func (s *plateService) List(ctx context.Context, filter repository.PlateFilter, 
 	}
 
 	if filter.OwnerID == nil {
-		visible := make([]*model.Plate, 0, len(plates))
-		for _, plate := range plates {
-			if plate.Visibility == model.PlateVisibilityPublic {
-				visible = append(visible, plate)
-			}
-		}
-		return visible, len(visible), nil
+		// Repository List already restricts to public plates when OwnerID is nil.
+		return plates, total, nil
 	}
 
 	var visible []*model.Plate
