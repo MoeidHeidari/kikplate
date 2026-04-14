@@ -90,20 +90,32 @@ jobs:
           ./.github/scripts/generate-homebrew-kikplate-rb.sh "${VERSION_PLAIN}" "${SHA256}" > kikplate.rb
           cat kikplate.rb
 
-      - name: brew audit
+      - name: brew audit, install, test (local tap)
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
         run: |
+          set -euo pipefail
+          brew uninstall stub/kikplate/kikplate 2>/dev/null || true
+          brew untap stub/kikplate 2>/dev/null || true
+          TAP_DIR=$(mktemp -d)
+          mkdir -p "${TAP_DIR}/Formula"
+          cp kikplate.rb "${TAP_DIR}/Formula/"
+          git -C "${TAP_DIR}" init -q
+          git -C "${TAP_DIR}" add Formula/kikplate.rb
+          git -C "${TAP_DIR}" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" -c user.name="github-actions[bot]" commit -qm "Add kikplate for CI"
+          brew tap stub/kikplate "${TAP_DIR}"
+          FORMULA_FULL="stub/kikplate/kikplate"
           brew update
           new_flag=()
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.audit_new }}" = "true" ]; then
             new_flag+=(--new)
           fi
-          brew audit --strict --online "${new_flag[@]}" --formula ./kikplate.rb
-
-      - name: brew install and test (from formula file)
-        run: |
+          brew audit --strict --online "${new_flag[@]}" "${FORMULA_FULL}"
           brew uninstall kikplate 2>/dev/null || true
-          brew install --build-from-source ./kikplate.rb
-          brew test kikplate
+          brew install --build-from-source "${FORMULA_FULL}"
+          brew test "${FORMULA_FULL}"
+          brew uninstall "${FORMULA_FULL}" || true
+          brew untap stub/kikplate
 
       - name: Upload formula artifact
         uses: actions/upload-artifact@v4

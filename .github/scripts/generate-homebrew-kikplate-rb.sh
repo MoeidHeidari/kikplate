@@ -25,7 +25,7 @@ EOF
   end
 
   test do
-    assert_match "Kikplate command line interface", shell_output("#{bin}/kikplate --help")
+    assert_match "Kikplate CLI", shell_output("#{bin}/kikplate --help")
   end
 end
 RUBY
