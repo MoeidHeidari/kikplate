@@ -1,0 +1,145 @@
+name: Homebrew core (kikplate)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: audit = validate formula; bump = open bump PR (formula must already exist in core)
+        type: choice
+        required: true
+        default: audit
+        options:
+          - audit
+          - bump
+      tag:
+        description: Release tag (e.g. v1.2.3). Required for manual audit and bump.
+        required: true
+        type: string
+      audit_new:
+        description: Pass --new to brew audit (required until the formula exists in homebrew-core)
+        type: boolean
+        required: true
+        default: false
+      homebrew_fork_org:
+        description: Optional. GitHub org that owns the homebrew-core fork (brew bump-formula-pr --fork-org)
+        required: false
+        type: string
+  release:
+    types: [published]
+
+concurrency:
+  group: homebrew-core-${{ github.repository }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    name: Resolve tag and version
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.out.outputs.tag }}
+      version_plain: ${{ steps.out.outputs.version_plain }}
+    steps:
+      - name: Resolve
+        id: out
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="$INPUT_TAG"
+          else
+            TAG="$RELEASE_TAG"
+          fi
+          if [ -z "$TAG" ]; then
+            echo "No tag resolved" >&2
+            exit 1
+          fi
+          case "$TAG" in
+            v*) ;;
+            *) TAG="v${TAG}" ;;
+          esac
+          VERSION_PLAIN="${TAG#v}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version_plain=${VERSION_PLAIN}" >> "$GITHUB_OUTPUT"
+
+  audit:
+    name: Generate formula and brew audit
+    needs: resolve
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch source tarball checksum
+        id: sum
+        env:
+          TAG: ${{ needs.resolve.outputs.tag }}
+        run: |
+          url="https://github.com/kikplate/kikplate/archive/refs/tags/${TAG}.tar.gz"
+          sha=$(curl -fsSL "$url" | shasum -a 256 | awk '{print $1}')
+          echo "sha256=${sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Write kikplate.rb
+        env:
+          VERSION_PLAIN: ${{ needs.resolve.outputs.version_plain }}
+          SHA256: ${{ steps.sum.outputs.sha256 }}
+        run: |
+          ./.github/scripts/generate-homebrew-kikplate-rb.sh "${VERSION_PLAIN}" "${SHA256}" > kikplate.rb
+          cat kikplate.rb
+
+      - name: brew audit
+        run: |
+          brew update
+          new_flag=()
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.audit_new }}" = "true" ]; then
+            new_flag+=(--new)
+          fi
+          brew audit --strict --online "${new_flag[@]}" --formula ./kikplate.rb
+
+      - name: brew install and test (from formula file)
+        run: |
+          brew uninstall kikplate 2>/dev/null || true
+          brew install --build-from-source ./kikplate.rb
+          brew test kikplate
+
+      - name: Upload formula artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: homebrew-kikplate-rb
+          path: kikplate.rb
+
+  bump:
+    name: Open Homebrew core bump PR
+    needs:
+      - resolve
+      - audit
+    runs-on: macos-latest
+    if: >
+      github.event_name == 'release' ||
+      (github.event_name == 'workflow_dispatch' && inputs.mode == 'bump')
+    steps:
+      - name: Check bump token
+        id: gate
+        env:
+          TOKEN: ${{ secrets.HOMEBREW_BUMP_GITHUB_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::HOMEBREW_BUMP_GITHUB_TOKEN is not set; skipping brew bump-formula-pr."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump formula PR
+        if: steps.gate.outputs.run == 'true'
+        uses: dawidd6/action-homebrew-bump-formula@v7
+        with:
+          token: ${{ secrets.HOMEBREW_BUMP_GITHUB_TOKEN }}
+          formula: kikplate
+          tag: ${{ needs.resolve.outputs.tag }}
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          org: ${{ inputs.homebrew_fork_org }}
