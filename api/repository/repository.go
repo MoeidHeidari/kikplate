@@ -57,14 +57,31 @@ type PlateRanked struct {
 }
 
 type BadgeOption struct {
-	Slug string `json:"slug"`
-	Name string `json:"name"`
+	Slug  string `json:"slug"`
+	Name  string `json:"name"`
+	Count int64  `json:"count"`
+}
+
+type CategoryFilterOption struct {
+	Slug  string `json:"slug"`
+	Count int64  `json:"count"`
+}
+
+type TagFilterOption struct {
+	Tag   string `json:"tag"`
+	Count int64  `json:"count"`
 }
 
 type PlateFilterOptions struct {
-	Categories []string      `json:"categories"`
-	Tags       []string      `json:"tags"`
-	Badges     []BadgeOption `json:"badges"`
+	Categories []CategoryFilterOption `json:"categories"`
+	Tags       []TagFilterOption      `json:"tags"`
+	Badges     []BadgeOption          `json:"badges"`
+}
+
+type ExplorerFilterAggregates struct {
+	CategoryCounts []CategoryCount
+	TagOptions     []TagFilterOption
+	BadgeOptions   []BadgeOption
 }
 type UserRepository interface {
 	Create(ctx context.Context, user *model.User) error
@@ -107,7 +124,7 @@ type PlateRepository interface {
 	GetCategoryCounts(ctx context.Context) ([]CategoryCount, error)
 	GetTopBookmarked(ctx context.Context, limit int) ([]PlateRanked, error)
 	GetTopRated(ctx context.Context, limit int) ([]PlateRanked, error)
-	GetFilterOptions(ctx context.Context) (*PlateFilterOptions, error)
+	GetExplorerFilterAggregates(ctx context.Context) (*ExplorerFilterAggregates, error)
 }
 
 type PlateMemberRepository interface {

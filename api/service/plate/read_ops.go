@@ -135,12 +135,39 @@ func (s *plateService) GetStats(ctx context.Context) (*repository.PlateStats, er
 }
 
 func (s *plateService) GetFilterOptions(ctx context.Context) (*repository.PlateFilterOptions, error) {
-	opts, err := s.plates.GetFilterOptions(ctx)
+	agg, err := s.plates.GetExplorerFilterAggregates(ctx)
 	if err != nil {
 		return nil, err
 	}
-	opts.Categories = lib.PlateCategorySlugs(s.env)
-	return opts, nil
+	countsByCanonicalSlug := accumulatePlateCategoryTotalsWithConfigCanonicalization(s.env, agg.CategoryCounts)
+	categories := explorerCategoryRowsAlignedWithConfigSlugs(s.env, countsByCanonicalSlug)
+
+	return &repository.PlateFilterOptions{
+		Categories: categories,
+		Tags:       agg.TagOptions,
+		Badges:     agg.BadgeOptions,
+	}, nil
+}
+
+func accumulatePlateCategoryTotalsWithConfigCanonicalization(env lib.Env, rows []repository.CategoryCount) map[string]int64 {
+	out := make(map[string]int64)
+	for _, row := range rows {
+		k := lib.NormalizePlateCategory(env, row.Category)
+		out[k] += row.Count
+	}
+	return out
+}
+
+func explorerCategoryRowsAlignedWithConfigSlugs(env lib.Env, countsByCanonicalSlug map[string]int64) []repository.CategoryFilterOption {
+	slugs := lib.PlateCategorySlugs(env)
+	opts := make([]repository.CategoryFilterOption, 0, len(slugs))
+	for _, slug := range slugs {
+		opts = append(opts, repository.CategoryFilterOption{
+			Slug:  slug,
+			Count: countsByCanonicalSlug[slug],
+		})
+	}
+	return opts
 }
 
 func (s *plateService) GetMonthlyGrowth(ctx context.Context, months int) ([]repository.MonthlyCount, error) {
@@ -152,11 +179,7 @@ func (s *plateService) GetCategoryCounts(ctx context.Context) ([]repository.Cate
 	if err != nil {
 		return nil, err
 	}
-	merged := make(map[string]int64)
-	for _, row := range rows {
-		k := lib.NormalizePlateCategory(s.env, row.Category)
-		merged[k] += row.Count
-	}
+	merged := accumulatePlateCategoryTotalsWithConfigCanonicalization(s.env, rows)
 	out := make([]repository.CategoryCount, 0, len(merged))
 	for k, v := range merged {
 		if v > 0 {

@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/kickplate/api/lib"
@@ -246,52 +248,114 @@ func (r *plateRepository) GetTopRated(ctx context.Context, limit int) ([]reposit
 	return rows, err
 }
 
-func (r *plateRepository) GetFilterOptions(ctx context.Context) (*repository.PlateFilterOptions, error) {
-	var categories []string
-	if err := r.db.WithContext(ctx).
-		Model(&model.Plate{}).
-		Distinct("category").
-		Order("category ASC").
-		Where("category <> ''").
-		Pluck("category", &categories).Error; err != nil {
+
+
+
+func sqlExplorerCategoriesQuery() string {
+	const groupedCategoryCountsForPublicPlates = `SELECT category, COUNT(*)::bigint AS count
+	FROM plate
+	WHERE visibility = ? AND category <> ''
+	GROUP BY category`
+
+	return strings.Join([]string{
+		`
+COALESCE(
+	(SELECT json_agg(row_to_json(c))
+	 FROM (`,
+		groupedCategoryCountsForPublicPlates,
+		`
+	 ) c),
+	'[]'::json
+) AS categories_json`,
+	}, "")
+}
+
+func sqlExplorerTagsQuery() string {
+	const groupedTagCountsPerPublicPlate = `SELECT pt.tag AS tag,
+		COUNT(DISTINCT CASE WHEN p.visibility = ? THEN p.id END)::bigint AS count
+	FROM plate_tag pt
+	INNER JOIN plate p ON p.id = pt.plate_id
+	WHERE pt.tag <> ''
+	GROUP BY pt.tag`
+
+	return strings.Join([]string{
+		`
+COALESCE(
+	(SELECT json_agg(row_to_json(t) ORDER BY t.tag)
+	 FROM (`,
+		groupedTagCountsPerPublicPlate,
+		`
+	 ) t),
+	'[]'::json
+) AS tags_json`,
+	}, "")
+}
+
+func sqlExplorerBadgesQuery() string {
+	const groupedBadgeCountsPerPublicPlate = `SELECT badge.slug AS slug,
+		badge.name AS name,
+		COUNT(DISTINCT CASE WHEN plate.visibility = ? THEN plate.id END)::bigint AS count
+	FROM badge
+	LEFT JOIN plate_badge ON plate_badge.badge_id = badge.id
+	LEFT JOIN plate ON plate.id = plate_badge.plate_id
+	WHERE badge.slug <> ''
+	GROUP BY badge.id, badge.slug, badge.name`
+
+	return strings.Join([]string{
+		`
+COALESCE(
+	(SELECT json_agg(row_to_json(b) ORDER BY b.name)
+	 FROM (`,
+		groupedBadgeCountsPerPublicPlate,
+		`
+	 ) b),
+	'[]'::json
+) AS badges_json`,
+	}, "")
+}
+
+func sqlQueryFilterAggregate() string {
+	categories := sqlExplorerCategoriesQuery()
+	tags := sqlExplorerTagsQuery()
+	badges := sqlExplorerBadgesQuery()
+
+	
+	return strings.Join([]string{
+		"SELECT " + categories,
+		tags,
+		badges,
+	}, ",")
+}
+
+func (r *plateRepository) GetExplorerFilterAggregates(ctx context.Context) (*repository.ExplorerFilterAggregates, error) {
+	pub := model.PlateVisibilityPublic
+	var row struct {
+		CategoriesJSON []byte `gorm:"column:categories_json"`
+		TagsJSON       []byte `gorm:"column:tags_json"`
+		BadgesJSON     []byte `gorm:"column:badges_json"`
+	}
+	err := r.db.WithContext(ctx).Raw(sqlQueryFilterAggregate(), pub, pub, pub).Scan(&row).Error
+	if err != nil {
 		return nil, err
 	}
 
-	var tags []string
-	if err := r.db.WithContext(ctx).
-		Model(&model.PlateTag{}).
-		Distinct("tag").
-		Order("tag ASC").
-		Where("tag <> ''").
-		Pluck("tag", &tags).Error; err != nil {
-		return nil, err
-	}
-
-	var badgeRows []struct {
-		Slug string `gorm:"column:slug"`
-		Name string `gorm:"column:name"`
-	}
-	if err := r.db.WithContext(ctx).
-		Table("badge").
-		Select("DISTINCT badge.slug, badge.name").
-		Joins("INNER JOIN plate_badge ON plate_badge.badge_id = badge.id").
-		Order("badge.name ASC").
-		Scan(&badgeRows).Error; err != nil {
-		return nil, err
-	}
-	badges := make([]repository.BadgeOption, 0, len(badgeRows))
-	for _, row := range badgeRows {
-		if row.Slug == "" {
-			continue
+	out := &repository.ExplorerFilterAggregates{}
+	if len(row.CategoriesJSON) > 0 && string(row.CategoriesJSON) != "null" {
+		if err := json.Unmarshal(row.CategoriesJSON, &out.CategoryCounts); err != nil {
+			return nil, err
 		}
-		badges = append(badges, repository.BadgeOption{Slug: row.Slug, Name: row.Name})
 	}
-
-	return &repository.PlateFilterOptions{
-		Categories: categories,
-		Tags:       tags,
-		Badges:     badges,
-	}, nil
+	if len(row.TagsJSON) > 0 && string(row.TagsJSON) != "null" {
+		if err := json.Unmarshal(row.TagsJSON, &out.TagOptions); err != nil {
+			return nil, err
+		}
+	}
+	if len(row.BadgesJSON) > 0 && string(row.BadgesJSON) != "null" {
+		if err := json.Unmarshal(row.BadgesJSON, &out.BadgeOptions); err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
 }
 
 func (r *plateRepository) ListDueForSync(ctx context.Context, limit int) ([]*model.Plate, error) {

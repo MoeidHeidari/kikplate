@@ -2,7 +2,12 @@
 
 import { useState } from "react"
 import { Search, X } from "lucide-react"
-import type { PlateBadgeFilterOption } from "@/src/domain/entities/Plate"
+import type {
+  PlateBadgeFilterOption,
+  PlateCategoryFilterOption,
+  PlateTagFilterOption,
+} from "@/src/domain/entities/Plate"
+import { formatExplorerCategoryLabel } from "@/src/presentation/utils/exploreLabels"
 
 interface Props {
   search: string
@@ -14,23 +19,39 @@ interface Props {
   onTags: (tags: string[]) => void
   activeBadges: string[]
   onBadges: (slugs: string[]) => void
-  categories: string[]
-  tags: string[]
+  categories: PlateCategoryFilterOption[]
+  tags: PlateTagFilterOption[]
   badges: PlateBadgeFilterOption[]
 }
 
-function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) {
+function Checkbox({
+  checked,
+  onChange,
+  label,
+  count,
+  disabled,
+}: {
+  checked: boolean
+  onChange: () => void
+  label: string
+  count?: number
+  disabled?: boolean
+}) {
+  const muted = Boolean(disabled)
   return (
     <button
       type="button"
       onClick={onChange}
-      className="flex items-center gap-2 w-full px-1 py-1 text-sm group"
+      disabled={disabled}
+      className={`group flex w-full items-center gap-2 px-1 py-1 text-sm text-left ${
+        muted ? "cursor-not-allowed opacity-50" : ""
+      }`}
       aria-pressed={checked}
     >
       <span
         className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center border transition-colors ${
           checked ? "border-primary bg-primary" : "border-border bg-background group-hover:border-foreground/40"
-        }`}
+        } ${muted ? "border-border/60" : ""}`}
       >
         {checked && (
           <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 text-primary-foreground" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -38,9 +59,22 @@ function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: ()
           </svg>
         )}
       </span>
-      <span className={`capitalize ${checked ? "text-foreground font-medium" : "text-muted-foreground group-hover:text-foreground"}`}>
+      <span
+        className={`min-w-0 flex-1 truncate ${
+          checked ? "font-medium text-foreground" : muted ? "text-muted-foreground" : "text-muted-foreground group-hover:text-foreground"
+        }`}
+      >
         {label}
       </span>
+      {count !== undefined && (
+        <span
+          className={`shrink-0 tabular-nums text-xs ${
+            muted ? "text-muted-foreground/70" : "text-muted-foreground"
+          }`}
+        >
+          {count}
+        </span>
+      )}
     </button>
   )
 }
@@ -79,20 +113,26 @@ function BadgesDropdown({
         {filtered.length === 0 ? (
           <p className="text-xs text-muted-foreground px-1 py-1.5">No badges found</p>
         ) : (
-          filtered.map((b) => (
-            <Checkbox
-              key={b.slug}
-              checked={activeBadges.includes(b.slug)}
-              onChange={() => {
-                if (activeBadges.includes(b.slug)) {
-                  onBadges(activeBadges.filter((s) => s !== b.slug))
-                } else {
-                  onBadges([...activeBadges, b.slug])
-                }
-              }}
-              label={b.name}
-            />
-          ))
+          filtered.map((b) => {
+            const selected = activeBadges.includes(b.slug)
+            const noPlates = b.count === 0
+            return (
+              <Checkbox
+                key={b.slug}
+                checked={selected}
+                disabled={noPlates && !selected}
+                count={b.count}
+                onChange={() => {
+                  if (selected) {
+                    onBadges(activeBadges.filter((s) => s !== b.slug))
+                  } else {
+                    onBadges([...activeBadges, b.slug])
+                  }
+                }}
+                label={b.name}
+              />
+            )
+          })
         )}
       </div>
     </div>
@@ -110,17 +150,22 @@ function CategoriesDropdown({
   onCategories: (cats: string[]) => void
   searchTerm: string
   setSearchTerm: (s: string) => void
-  categories: string[]
+  categories: PlateCategoryFilterOption[]
 }) {
-  const filtered = categories.filter((cat) =>
-    cat.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const q = searchTerm.toLowerCase()
+  const filtered = categories.filter((row) => {
+    const label = formatExplorerCategoryLabel(row.slug)
+    return (
+      row.slug.toLowerCase().includes(q) ||
+      label.toLowerCase().includes(q)
+    )
+  })
 
-  function toggleCategory(cat: string) {
-    if (activeCategories.includes(cat)) {
-      onCategories(activeCategories.filter((c) => c !== cat))
+  function toggleCategory(slug: string) {
+    if (activeCategories.includes(slug)) {
+      onCategories(activeCategories.filter((c) => c !== slug))
     } else {
-      onCategories([...activeCategories, cat])
+      onCategories([...activeCategories, slug])
     }
   }
 
@@ -142,14 +187,20 @@ function CategoriesDropdown({
         ) : filtered.length === 0 ? (
           <p className="text-xs text-muted-foreground px-1 py-1.5">No categories found</p>
         ) : (
-          filtered.map((cat) => (
-            <Checkbox
-              key={cat}
-              checked={activeCategories.includes(cat)}
-              onChange={() => toggleCategory(cat)}
-              label={cat}
-            />
-          ))
+          filtered.map((row) => {
+            const selected = activeCategories.includes(row.slug)
+            const noPlates = row.count === 0
+            return (
+              <Checkbox
+                key={row.slug}
+                checked={selected}
+                disabled={noPlates && !selected}
+                count={row.count}
+                onChange={() => toggleCategory(row.slug)}
+                label={formatExplorerCategoryLabel(row.slug)}
+              />
+            )
+          })
         )}
       </div>
     </div>
@@ -167,9 +218,9 @@ function TagsDropdown({
   onTags: (tags: string[]) => void
   searchTerm: string
   setSearchTerm: (s: string) => void
-  tags: string[]
+  tags: PlateTagFilterOption[]
 }) {
-  const filtered = tags.filter((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filtered = tags.filter((row) => row.tag.toLowerCase().includes(searchTerm.toLowerCase()))
 
   return (
     <div className="space-y-1.5">
@@ -187,20 +238,26 @@ function TagsDropdown({
         {filtered.length === 0 ? (
           <p className="text-xs text-muted-foreground px-1 py-1.5">No tags found</p>
         ) : (
-          filtered.map((tag) => (
-            <Checkbox
-              key={tag}
-              checked={activeTags.includes(tag)}
-              onChange={() => {
-                if (activeTags.includes(tag)) {
-                  onTags(activeTags.filter((at) => at !== tag))
-                } else {
-                  onTags([...activeTags, tag])
-                }
-              }}
-              label={tag}
-            />
-          ))
+          filtered.map((row) => {
+            const selected = activeTags.includes(row.tag)
+            const noPlates = row.count === 0
+            return (
+              <Checkbox
+                key={row.tag}
+                checked={selected}
+                disabled={noPlates && !selected}
+                count={row.count}
+                onChange={() => {
+                  if (selected) {
+                    onTags(activeTags.filter((at) => at !== row.tag))
+                  } else {
+                    onTags([...activeTags, row.tag])
+                  }
+                }}
+                label={row.tag}
+              />
+            )
+          })
         )}
       </div>
     </div>

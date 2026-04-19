@@ -3,6 +3,7 @@
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { formatExplorerCategoryLabel } from "@/src/presentation/utils/exploreLabels"
 
 interface Props {
   search: string
@@ -74,7 +75,7 @@ export function ExploreFilterChips({
           />
         )}
         {categories.map((c) => (
-          <Chip key={`cat-${c}`} label={c} onRemove={() => onRemoveCategory(c)} />
+          <Chip key={`cat-${c}`} label={formatExplorerCategoryLabel(c)} onRemove={() => onRemoveCategory(c)} />
         ))}
         {tags.map((t) => (
           <Chip key={`tag-${t}`} label={t} onRemove={() => onRemoveTag(t)} />

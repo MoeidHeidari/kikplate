@@ -48,14 +48,20 @@ export function PlateGridClient({
   const { data: filterOptions } = usePlateFilterOptions()
   const { data: catalogBadges } = useBadges()
 
-  const badgeFilterOptions = useMemo(
-    () => (catalogBadges ?? []).map((b) => ({ slug: b.slug, name: b.name })),
-    [catalogBadges]
-  )
+  const badgeFilterOptions = useMemo(() => {
+    if (filterOptions?.badges?.length) {
+      return filterOptions.badges
+    }
+    return (catalogBadges ?? []).map((b) => ({
+      slug: b.slug,
+      name: b.name,
+      count: 0,
+    }))
+  }, [filterOptions?.badges?.length, catalogBadges?.length])
 
   const badgeLabel = useCallback(
     (slug: string) => badgeFilterOptions.find((b) => b.slug === slug)?.name ?? slug,
-    [badgeFilterOptions]
+    [badgeFilterOptions.length]
   )
 
   useEffect(() => {
@@ -144,7 +150,7 @@ export function PlateGridClient({
         </Sheet>
       </div>
 
-      <aside className="hidden w-[17.5rem] shrink-0 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:pr-1 lg:pt-0.5">
+      <aside className="hidden w-70 shrink-0 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:pr-1 lg:pt-0.5">
         <div className="border border-border bg-card p-4">
           <p className="mb-4 font-heading text-sm font-semibold text-foreground">Filter plates</p>
           <PlateFilters {...filterProps} />
