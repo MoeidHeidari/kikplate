@@ -32,6 +32,12 @@ sync:
 # Environment variable: GITHUB_TOKEN
 github:
   token: ""
+  app:
+    id: 0
+    slug: kikplate
+    install_url: ""
+    private_key_path: "../config/private-key.pem"
+    webhook_secret: ""
 
 # Local email/password authentication settings.
 auth:

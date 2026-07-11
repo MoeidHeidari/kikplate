@@ -19,6 +19,8 @@ export interface MeResult {
   email?: string
   role?: UserRole
   is_active?: boolean
+  github_connected: boolean
+  github_installation_account?: string
 }
 
 export interface AuthResult {

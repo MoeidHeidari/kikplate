@@ -15,6 +15,7 @@ import (
 	"github.com/kickplate/api/lib"
 	"github.com/kickplate/api/model"
 	"github.com/kickplate/api/repository"
+	"github.com/kickplate/api/service/githubapp"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -35,6 +36,7 @@ func (c *SyncCommand) Run() lib.CommandRunner {
 		plateTagRepo repository.PlateTagRepository,
 		accountRepo repository.AccountRepository,
 		userRepo repository.UserRepository,
+		githubApps githubapp.Service,
 		emitter *events.EventEmitter,
 	) {
 		pollEvery := parseDurationWithFallback(env.SyncPollInterval, 30*time.Second)
@@ -58,7 +60,7 @@ func (c *SyncCommand) Run() lib.CommandRunner {
 					if p == nil {
 						continue
 					}
-					syncOnePlate(ctx, logger, plateRepo, plateTagRepo, accountRepo, userRepo, emitter, env, p, defaultSyncInterval)
+					syncOnePlate(ctx, logger, plateRepo, plateTagRepo, accountRepo, userRepo, githubApps, emitter, env, p, defaultSyncInterval)
 				}
 			}
 
@@ -74,6 +76,7 @@ func syncOnePlate(
 	plateTagRepo repository.PlateTagRepository,
 	accountRepo repository.AccountRepository,
 	userRepo repository.UserRepository,
+	githubApps githubapp.Service,
 	emitter *events.EventEmitter,
 	env lib.Env,
 	plate *model.Plate,
@@ -150,7 +153,17 @@ func syncOnePlate(
 		return
 	}
 
-	manifest, _, err := fetchPlateManifestYAML(*plate.RepoURL, *plate.Branch, env.GitHubToken)
+	githubToken := strings.TrimSpace(env.GitHubToken)
+	if githubApps != nil {
+		resolvedToken, tokenErr := githubApps.GetTokenForOwner(ctx, plate.OwnerID, plate.OrganizationID)
+		if tokenErr != nil {
+			logger.Warnf("sync: failed to resolve github installation token for plate %s: %v", plate.ID, tokenErr)
+		} else if strings.TrimSpace(resolvedToken) != "" {
+			githubToken = resolvedToken
+		}
+	}
+
+	manifest, _, err := fetchPlateManifestYAML(*plate.RepoURL, *plate.Branch, githubToken)
 	if err != nil {
 		failed := model.SyncStatusFailed
 		errText := err.Error()
@@ -169,11 +182,18 @@ func syncOnePlate(
 		logger.Warnf("sync: plate %s failed: %v", plate.ID, err)
 		return
 	}
+	repoPrivate, repoVisibilityErr := fetchRepositoryPrivate(*plate.RepoURL, githubToken)
+	if repoVisibilityErr != nil {
+		logger.Warnf("sync: failed to fetch repository visibility for plate %s: %v", plate.ID, repoVisibilityErr)
+	}
 
 	isVerified := true
 	verifiedAt := plate.VerifiedAt
 	syncStatus := model.SyncStatusSynced
 	var syncError *string
+	privateOrganizationPlate := env.Features.PrivateOrganizationsEnabled &&
+		plate.Organization != nil &&
+		plate.Organization.Visibility == model.OrganizationVisibilityPrivate
 
 	if plate.VerificationToken == nil || strings.TrimSpace(*plate.VerificationToken) == "" {
 		isVerified = false
@@ -197,7 +217,11 @@ func syncOnePlate(
 			if verifiedAt == nil {
 				verifiedAt = &now
 			}
-			desiredVisibility = model.PlateVisibilityPublic
+			if privateOrganizationPlate || repoPrivate {
+				desiredVisibility = model.PlateVisibilityPrivate
+			} else {
+				desiredVisibility = model.PlateVisibilityPublic
+			}
 		}
 	}
 
@@ -414,16 +438,47 @@ func fetchManifestFileYAML(repoURL, branch, filename string, githubToken string)
 	return &manifest, raw, nil
 }
 
+func fetchRepositoryPrivate(repoURL string, githubToken string) (bool, error) {
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s", extractRepoPath(repoURL))
+	client := &http.Client{Timeout: 15 * time.Second}
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return false, err
+	}
+	if githubToken != "" {
+		req.Header.Set("Authorization", "token "+githubToken)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("visibility fetch failed with status %d", resp.StatusCode)
+	}
+	var payload struct {
+		Private bool `json:"private"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return false, err
+	}
+	return payload.Private, nil
+}
+
 func repoURLToContentsURL(repoURL, branch, filename string) string {
 	return fmt.Sprintf("https://api.github.com/repos/%s/contents/%s?ref=%s", extractRepoPath(repoURL), filename, branch)
 }
 
 func extractRepoPath(repoURL string) string {
+	repoURL = strings.TrimSpace(repoURL)
 	for _, prefix := range []string{"https://github.com/", "http://github.com/", "github.com/"} {
 		if len(repoURL) > len(prefix) && repoURL[:len(prefix)] == prefix {
-			return repoURL[len(prefix):]
+			repoURL = repoURL[len(prefix):]
+			break
 		}
 	}
+	repoURL = strings.TrimSuffix(repoURL, ".git")
+	repoURL = strings.Trim(repoURL, "/")
 	return repoURL
 }
 

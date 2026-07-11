@@ -39,14 +39,16 @@ func Authenticate(env lib.Env, logger lib.Logger) func(http.Handler) http.Handle
 
 func extractBearerToken(r *http.Request) string {
 	header := r.Header.Get("Authorization")
-	if header == "" {
-		return ""
+	if header != "" {
+		parts := strings.SplitN(header, " ", 2)
+		if len(parts) == 2 && strings.EqualFold(parts[0], "bearer") {
+			return parts[1]
+		}
 	}
-	parts := strings.SplitN(header, " ", 2)
-	if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
-		return ""
+	if cookie, err := r.Cookie("kp_token"); err == nil {
+		return cookie.Value
 	}
-	return parts[1]
+	return ""
 }
 
 func parseJWT(tokenStr, secret string) (uuid.UUID, error) {

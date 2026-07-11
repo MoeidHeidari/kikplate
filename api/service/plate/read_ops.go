@@ -60,7 +60,38 @@ func (s *plateService) GetBySlug(ctx context.Context, slug string, requesterID u
 		return nil, ErrNotFound
 	}
 
-	if s.env.Features.PrivateOrganizationsEnabled && plate.OrganizationID != nil && plate.Organization != nil && plate.Organization.Visibility == model.OrganizationVisibilityPrivate {
+	isPrivateRepoPlate, privateRepoErr := s.isPrivateRepositoryPlate(ctx, plate)
+	if privateRepoErr != nil {
+		s.logger.Warnf("private repository visibility check failed plate_id=%s err=%v", plate.ID, privateRepoErr)
+	}
+	if isPrivateRepoPlate {
+		if requesterID == uuid.Nil {
+			return nil, ErrNotFound
+		}
+		if plate.OrganizationID != nil {
+			hasOrgAccess, err := s.hasOrganizationAccess(ctx, *plate.OrganizationID, requesterID)
+			if err != nil {
+				return nil, err
+			}
+			if !hasOrgAccess {
+				return nil, ErrNotFound
+			}
+		} else {
+			member, err := s.members.GetByPlateAndAccount(ctx, plate.ID, requesterID)
+			if err != nil {
+				return nil, err
+			}
+			if plate.OwnerID != requesterID && member == nil {
+				return nil, ErrNotFound
+			}
+		}
+	}
+
+	isPrivateOrgPlate, err := s.isPrivateOrganizationPlate(ctx, plate)
+	if err != nil {
+		return nil, err
+	}
+	if isPrivateOrgPlate {
 		if requesterID == uuid.Nil {
 			return nil, ErrNotFound
 		}
@@ -110,6 +141,15 @@ func (s *plateService) List(ctx context.Context, filter repository.PlateFilter, 
 		if err == nil && hasOrgAccess {
 			filter.AccessibleOrganizationIDs = []uuid.UUID{*filter.OrganizationID}
 		}
+	} else if filter.OrganizationID == nil && requesterID != uuid.Nil && s.orgMembers != nil {
+		members, err := s.orgMembers.ListByAccount(ctx, requesterID)
+		if err == nil {
+			for _, member := range members {
+				if member != nil && member.Status == model.OrganizationMemberStatusAccepted {
+					filter.AccessibleOrganizationIDs = append(filter.AccessibleOrganizationIDs, member.OrganizationID)
+				}
+			}
+		}
 	}
 	plates, total, err := s.plates.List(ctx, filter)
 	if err != nil {
@@ -118,7 +158,37 @@ func (s *plateService) List(ctx context.Context, filter repository.PlateFilter, 
 
 	var visible []*model.Plate
 	for _, plate := range plates {
-		if s.env.Features.PrivateOrganizationsEnabled && plate.OrganizationID != nil && plate.Organization != nil && plate.Organization.Visibility == model.OrganizationVisibilityPrivate {
+		isPrivateRepoPlate, privateRepoErr := s.isPrivateRepositoryPlate(ctx, plate)
+		if privateRepoErr != nil {
+			s.logger.Warnf("private repository visibility check failed plate_id=%s err=%v", plate.ID, privateRepoErr)
+		}
+		if isPrivateRepoPlate {
+			if requesterID == uuid.Nil {
+				continue
+			}
+			if plate.OrganizationID != nil {
+				hasOrgAccess, err := s.hasOrganizationAccess(ctx, *plate.OrganizationID, requesterID)
+				if err != nil || !hasOrgAccess {
+					continue
+				}
+				visible = append(visible, plate)
+				continue
+			}
+			member, err := s.members.GetByPlateAndAccount(ctx, plate.ID, requesterID)
+			if err != nil {
+				continue
+			}
+			if plate.OwnerID == requesterID || member != nil {
+				visible = append(visible, plate)
+			}
+			continue
+		}
+
+		isPrivateOrgPlate, err := s.isPrivateOrganizationPlate(ctx, plate)
+		if err != nil {
+			continue
+		}
+		if isPrivateOrgPlate {
 			if requesterID == uuid.Nil {
 				continue
 			}
@@ -266,7 +336,11 @@ func (s *plateService) ListBookmarked(ctx context.Context, accountID uuid.UUID, 
 			continue
 		}
 
-		if s.env.Features.PrivateOrganizationsEnabled && plate.OrganizationID != nil && plate.Organization != nil && plate.Organization.Visibility == model.OrganizationVisibilityPrivate {
+		isPrivateOrgPlate, err := s.isPrivateOrganizationPlate(ctx, plate)
+		if err != nil {
+			continue
+		}
+		if isPrivateOrgPlate {
 			hasOrgAccess, err := s.hasOrganizationAccess(ctx, *plate.OrganizationID, accountID)
 			if err != nil || !hasOrgAccess {
 				continue
@@ -297,4 +371,38 @@ func (s *plateService) ListBookmarked(ctx context.Context, accountID uuid.UUID, 
 	}
 
 	return plates, nil
+}
+
+func (s *plateService) isPrivateOrganizationPlate(ctx context.Context, plate *model.Plate) (bool, error) {
+	if !s.env.Features.PrivateOrganizationsEnabled || plate == nil || plate.OrganizationID == nil {
+		return false, nil
+	}
+	if plate.Organization != nil {
+		return plate.Organization.Visibility == model.OrganizationVisibilityPrivate, nil
+	}
+	if s.orgs == nil {
+		return false, nil
+	}
+	org, err := s.orgs.GetByID(ctx, *plate.OrganizationID)
+	if err != nil {
+		return false, err
+	}
+	if org == nil {
+		return false, nil
+	}
+	plate.Organization = org
+	return org.Visibility == model.OrganizationVisibilityPrivate, nil
+}
+
+func (s *plateService) isPrivateRepositoryPlate(ctx context.Context, plate *model.Plate) (bool, error) {
+	if plate == nil || plate.Type != model.PlateTypeRepository || plate.RepoURL == nil {
+		return false, nil
+	}
+	ownerAccountID := plate.OwnerID.String()
+	var organizationIDStr *string
+	if plate.OrganizationID != nil {
+		orgID := plate.OrganizationID.String()
+		organizationIDStr = &orgID
+	}
+	return s.fetchRepositoryVisibility(ctx, *plate.RepoURL, ownerAccountID, organizationIDStr)
 }

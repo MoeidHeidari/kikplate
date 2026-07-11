@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/kickplate/api/service/auth"
+	"github.com/kickplate/api/service/githubapp"
 	organizationservice "github.com/kickplate/api/service/organization"
 	plateservice "github.com/kickplate/api/service/plate"
 )
@@ -70,6 +71,12 @@ func respondServiceError(w http.ResponseWriter, err error) {
 		respondError(w, http.StatusUnprocessableEntity, err.Error())
 	case errors.Is(err, plateservice.ErrFetchFailed):
 		respondError(w, http.StatusBadGateway, err.Error())
+	case errors.Is(err, plateservice.ErrPrivateRepositoryScope):
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
+	case errors.Is(err, plateservice.ErrAccountGitHubAccess):
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
+	case errors.Is(err, plateservice.ErrOrganizationGitHubAccess):
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
 	case errors.Is(err, plateservice.ErrInvalidInput):
 		respondError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, plateservice.ErrOrganizationRequired):
@@ -101,6 +108,22 @@ func respondServiceError(w http.ResponseWriter, err error) {
 	case errors.Is(err, organizationservice.ErrInviteForbidden):
 		respondError(w, http.StatusForbidden, err.Error())
 	case errors.Is(err, organizationservice.ErrInvalidInputRole):
+		respondError(w, http.StatusBadRequest, err.Error())
+	case errors.Is(err, githubapp.ErrNotConfigured):
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
+	case errors.Is(err, githubapp.ErrUnauthorized):
+		respondError(w, http.StatusForbidden, err.Error())
+	case errors.Is(err, githubapp.ErrInvalidState):
+		respondError(w, http.StatusBadRequest, err.Error())
+	case errors.Is(err, githubapp.ErrInstallationNotFound):
+		respondError(w, http.StatusNotFound, err.Error())
+	case errors.Is(err, githubapp.ErrInstallationTargetType):
+		respondError(w, http.StatusUnprocessableEntity, err.Error())
+	case errors.Is(err, githubapp.ErrInstallationLookupFailed), errors.Is(err, githubapp.ErrAccessTokenFailed):
+		respondError(w, http.StatusBadGateway, err.Error())
+	case errors.Is(err, githubapp.ErrWebhookSignatureInvalid):
+		respondError(w, http.StatusUnauthorized, err.Error())
+	case errors.Is(err, githubapp.ErrWebhookPayloadInvalid):
 		respondError(w, http.StatusBadRequest, err.Error())
 	default:
 		respondError(w, http.StatusInternalServerError, "internal server error")

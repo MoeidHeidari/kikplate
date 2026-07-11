@@ -13,18 +13,20 @@ import (
 	"github.com/kickplate/api/lib"
 	"github.com/kickplate/api/model"
 	"github.com/kickplate/api/repository"
+	"github.com/kickplate/api/service/githubapp"
 	organizationservice "github.com/kickplate/api/service/organization"
 )
 
 type OrganizationHandler struct {
-	orgs     organizationservice.OrganizationService
-	accounts repository.AccountRepository
-	users    repository.UserRepository
-	logger   lib.Logger
+	orgs      organizationservice.OrganizationService
+	githubApp githubapp.Service
+	accounts  repository.AccountRepository
+	users     repository.UserRepository
+	logger    lib.Logger
 }
 
-func NewOrganizationHandler(orgs organizationservice.OrganizationService, accounts repository.AccountRepository, users repository.UserRepository, logger lib.Logger) OrganizationHandler {
-	return OrganizationHandler{orgs: orgs, accounts: accounts, users: users, logger: logger}
+func NewOrganizationHandler(orgs organizationservice.OrganizationService, githubApp githubapp.Service, accounts repository.AccountRepository, users repository.UserRepository, logger lib.Logger) OrganizationHandler {
+	return OrganizationHandler{orgs: orgs, githubApp: githubApp, accounts: accounts, users: users, logger: logger}
 }
 
 type orgOwnerInfo struct {
@@ -44,29 +46,33 @@ type orgMemberResponse struct {
 }
 
 type orgResponse struct {
-	ID             uuid.UUID     `json:"id"`
-	Name           string        `json:"name"`
-	Visibility     string        `json:"visibility"`
-	Description    string        `json:"description"`
-	LogoURL        *string       `json:"logo_url,omitempty"`
-	OwnerID        uuid.UUID     `json:"owner_id"`
-	MembershipRole *string       `json:"membership_role,omitempty"`
-	Owner          *orgOwnerInfo `json:"owner,omitempty"`
-	CreatedAt      interface{}   `json:"created_at"`
-	UpdatedAt      interface{}   `json:"updated_at"`
+	ID                            uuid.UUID     `json:"id"`
+	Name                          string        `json:"name"`
+	Visibility                    string        `json:"visibility"`
+	Description                   string        `json:"description"`
+	LogoURL                       *string       `json:"logo_url,omitempty"`
+	OwnerID                       uuid.UUID     `json:"owner_id"`
+	GitHubConnected               bool          `json:"github_connected"`
+	GitHubInstallationAccountName *string       `json:"github_installation_account,omitempty"`
+	MembershipRole                *string       `json:"membership_role,omitempty"`
+	Owner                         *orgOwnerInfo `json:"owner,omitempty"`
+	CreatedAt                     interface{}   `json:"created_at"`
+	UpdatedAt                     interface{}   `json:"updated_at"`
 }
 
 func (h OrganizationHandler) enrichOrg(ctx context.Context, org *model.Organization, membershipRole *string) orgResponse {
 	resp := orgResponse{
-		ID:             org.ID,
-		Name:           org.Name,
-		Visibility:     org.Visibility,
-		Description:    org.Description,
-		LogoURL:        org.LogoURL,
-		OwnerID:        org.OwnerID,
-		MembershipRole: membershipRole,
-		CreatedAt:      org.CreatedAt,
-		UpdatedAt:      org.UpdatedAt,
+		ID:                            org.ID,
+		Name:                          org.Name,
+		Visibility:                    org.Visibility,
+		Description:                   org.Description,
+		LogoURL:                       org.LogoURL,
+		OwnerID:                       org.OwnerID,
+		GitHubConnected:               org.GitHubInstallationID != nil,
+		GitHubInstallationAccountName: org.GitHubInstallationAccount,
+		MembershipRole:                membershipRole,
+		CreatedAt:                     org.CreatedAt,
+		UpdatedAt:                     org.UpdatedAt,
 	}
 	if org.Owner != nil {
 		info := &orgOwnerInfo{
@@ -153,6 +159,19 @@ func (h OrganizationHandler) ListMine(w http.ResponseWriter, r *http.Request) {
 	}
 
 	orgs, err := h.orgs.ListByAccount(r.Context(), accountID)
+	if err != nil {
+		respondServiceError(w, err)
+		return
+	}
+	for _, org := range orgs {
+		if org == nil {
+			continue
+		}
+		if err := h.githubApp.EnsureOrganizationConnection(r.Context(), org.ID); err != nil {
+			h.logger.Warnf("ensure org github connection failed org_id=%s err=%v", org.ID, err)
+		}
+	}
+	orgs, err = h.orgs.ListByAccount(r.Context(), accountID)
 	if err != nil {
 		respondServiceError(w, err)
 		return
@@ -277,6 +296,32 @@ func (h OrganizationHandler) Leave(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, map[string]string{"message": "left organization"})
+}
+
+func (h OrganizationHandler) ConnectGitHub(w http.ResponseWriter, r *http.Request) {
+	accountID, ok := middleware.GetAccountID(r.Context())
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
+	orgID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "invalid organization id")
+		return
+	}
+
+	installURL, err := h.githubApp.StartOrganizationConnect(r.Context(), accountID, orgID)
+	if err != nil {
+		respondServiceError(w, err)
+		return
+	}
+	if state := extractGitHubInstallState(installURL); strings.TrimSpace(state) != "" {
+		setGitHubInstallStateCookie(w, state)
+	}
+	installURL = withGitHubInstallCallback(installURL, absoluteGitHubAppCallbackURL(r))
+
+	http.Redirect(w, r, installURL, http.StatusTemporaryRedirect)
 }
 
 func (h OrganizationHandler) InviteMember(w http.ResponseWriter, r *http.Request) {

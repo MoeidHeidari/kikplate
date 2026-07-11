@@ -214,7 +214,7 @@ export function OwnedPlates({ accountId }: { accountId: string }) {
                     )}
                     <div className="pointer-events-auto">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild nativeButton>
                         <Button
                           type="button"
                           variant="ghost"

@@ -75,9 +75,10 @@ func (r *plateRepository) List(ctx context.Context, filter repository.PlateFilte
 	}
 	if filter.OwnerID == nil {
 		if len(filter.AccessibleOrganizationIDs) > 0 {
-			q = q.Where("visibility = ? OR organization_id IN ?", model.PlateVisibilityPublic, filter.AccessibleOrganizationIDs)
+			q = q.Where("(visibility = ? AND (organization_id IS NULL OR organization_id IN (SELECT id FROM organizations WHERE visibility = ?))) OR organization_id IN ?", model.PlateVisibilityPublic, model.OrganizationVisibilityPublic, filter.AccessibleOrganizationIDs)
 		} else {
 			q = q.Where("visibility = ?", model.PlateVisibilityPublic)
+			q = q.Where("organization_id IS NULL OR organization_id IN (SELECT id FROM organizations WHERE visibility = ?)", model.OrganizationVisibilityPublic)
 		}
 	}
 	if filter.Search != "" {
@@ -255,7 +256,9 @@ func (r *plateRepository) GetTopRated(ctx context.Context, limit int) ([]reposit
 func sqlExplorerCategoriesQuery() string {
 	const groupedCategoryCountsForPublicPlates = `SELECT category, COUNT(*)::bigint AS count
 	FROM plate
-	WHERE visibility = ? AND category <> ''
+	WHERE visibility = ?
+		AND (organization_id IS NULL OR organization_id IN (SELECT id FROM organizations WHERE visibility = ?))
+		AND category <> ''
 	GROUP BY category`
 
 	return strings.Join([]string{
@@ -273,7 +276,9 @@ COALESCE(
 
 func sqlExplorerTagsQuery() string {
 	const groupedTagCountsPerPublicPlate = `SELECT pt.tag AS tag,
-		COUNT(DISTINCT CASE WHEN p.visibility = ? THEN p.id END)::bigint AS count
+		COUNT(DISTINCT CASE WHEN p.visibility = ?
+			AND (p.organization_id IS NULL OR p.organization_id IN (SELECT id FROM organizations WHERE visibility = ?))
+		THEN p.id END)::bigint AS count
 	FROM plate_tag pt
 	INNER JOIN plate p ON p.id = pt.plate_id
 	WHERE pt.tag <> ''
@@ -295,7 +300,9 @@ COALESCE(
 func sqlExplorerBadgesQuery() string {
 	const groupedBadgeCountsPerPublicPlate = `SELECT badge.slug AS slug,
 		badge.name AS name,
-		COUNT(DISTINCT CASE WHEN plate.visibility = ? THEN plate.id END)::bigint AS count
+		COUNT(DISTINCT CASE WHEN plate.visibility = ?
+			AND (plate.organization_id IS NULL OR plate.organization_id IN (SELECT id FROM organizations WHERE visibility = ?))
+		THEN plate.id END)::bigint AS count
 	FROM badge
 	LEFT JOIN plate_badge ON plate_badge.badge_id = badge.id
 	LEFT JOIN plate ON plate.id = plate_badge.plate_id
@@ -329,12 +336,13 @@ func sqlQueryFilterAggregate() string {
 
 func (r *plateRepository) GetExplorerFilterAggregates(ctx context.Context) (*repository.ExplorerFilterAggregates, error) {
 	pub := model.PlateVisibilityPublic
+	orgPub := model.OrganizationVisibilityPublic
 	var row struct {
 		CategoriesJSON []byte `gorm:"column:categories_json"`
 		TagsJSON       []byte `gorm:"column:tags_json"`
 		BadgesJSON     []byte `gorm:"column:badges_json"`
 	}
-	err := r.db.WithContext(ctx).Raw(sqlQueryFilterAggregate(), pub, pub, pub).Scan(&row).Error
+	err := r.db.WithContext(ctx).Raw(sqlQueryFilterAggregate(), pub, orgPub, pub, orgPub, pub, orgPub).Scan(&row).Error
 	if err != nil {
 		return nil, err
 	}
@@ -361,6 +369,7 @@ func (r *plateRepository) GetExplorerFilterAggregates(ctx context.Context) (*rep
 func (r *plateRepository) ListDueForSync(ctx context.Context, limit int) ([]*model.Plate, error) {
 	var plates []*model.Plate
 	result := r.db.WithContext(ctx).
+		Preload("Organization").
 		Where("type = ? AND (next_sync_at <= NOW() OR (sync_status = ? AND updated_at <= NOW() - INTERVAL '2 minutes'))",
 			model.PlateTypeRepository, model.SyncStatusSyncing).
 		Order("next_sync_at ASC").

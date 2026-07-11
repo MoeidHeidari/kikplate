@@ -31,11 +31,17 @@ func (s *plateService) VerifyRepository(ctx context.Context, plateID uuid.UUID, 
 	}
 
 	expectedToken := strings.ToLower(strings.TrimSpace(*plate.VerificationToken))
+	ownerAccountID := plate.OwnerID.String()
+	var organizationIDStr *string
+	if plate.OrganizationID != nil {
+		orgID := plate.OrganizationID.String()
+		organizationIDStr = &orgID
+	}
 
 	var kp *KickplateYAML
 	var err error
 	for attempt := 0; attempt < 2; attempt++ {
-		kp, err = s.fetchKickplateYAMLWithOptions(*plate.RepoURL, *plate.Branch, attempt > 0)
+		kp, err = s.fetchKickplateYAMLWithOptions(ctx, *plate.RepoURL, *plate.Branch, ownerAccountID, organizationIDStr, attempt > 0)
 		if err != nil {
 			if attempt == 0 && (errors.Is(err, ErrFetchFailed) || errors.Is(err, ErrMissingYAML)) {
 				time.Sleep(1200 * time.Millisecond)
@@ -70,6 +76,14 @@ func (s *plateService) VerifyRepository(ctx context.Context, plateID uuid.UUID, 
 	syncInterval := syncIntervalDuration.String()
 	nextSync := now.Add(syncIntervalDuration)
 	visibility := model.PlateVisibilityPublic
+
+	repoPrivate, visibilityErr := s.fetchRepositoryVisibility(ctx, *plate.RepoURL, ownerAccountID, organizationIDStr)
+	if visibilityErr != nil {
+		return nil, visibilityErr
+	}
+	if repoPrivate {
+		visibility = model.PlateVisibilityPrivate
+	}
 
 	if plate.OrganizationID != nil && s.orgs != nil {
 		org, orgErr := s.orgs.GetByID(ctx, *plate.OrganizationID)

@@ -65,6 +65,9 @@ metadata:
 type: Opaque
 stringData:
   JWT_SECRET: "a-long-random-secret-minimum-32-characters"
+  GITHUB_TOKEN: ""
+  GITHUB_APP_PRIVATE_KEY: "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+  GITHUB_APP_WEBHOOK_SECRET: "your-github-app-webhook-secret"
   SSO_GITHUB_CLIENT_SECRET: "your-github-client-secret"
   SSO_GOOGLE_CLIENT_SECRET: "your-google-client-secret"
   SSO_GITLAB_CLIENT_SECRET: "your-gitlab-client-secret"
@@ -88,11 +91,25 @@ Key values to change for a real deployment:
 server:
   frontend_url: https://kikplate.yourdomain.com
 
+github:
+  app:
+    id: 123456
+    slug: kikplate
+    install_url: ""
+
+private_org:
+  enabled: true
+
 sso:
   providers:
     - name: github
       client_id: YOUR_GITHUB_CLIENT_ID
       redirect_url: https://kikplate.yourdomain.com/api/auth/github/callback
+
+Set your GitHub App registration to use:
+
+- Setup URL: `https://kikplate.yourdomain.com/auth/github/app/callback`
+- Webhook URL: `https://kikplate.yourdomain.com/auth/github/app/webhook`
 ```
 
 Leave `client_secret` empty in the ConfigMap. The secret is injected as an environment variable from `app-credentials-secret.yaml`.

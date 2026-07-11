@@ -30,7 +30,9 @@ helm install kikplate oci://ghcr.io/kikplate/helm-charts/kikplate \
   --namespace kikplate \
   --create-namespace \
   --set secrets.jwtSecret="$(openssl rand -base64 32)" \
-  --set secrets.sso.githubClientSecret="YOUR_GITHUB_CLIENT_SECRET"
+  --set secrets.sso.githubClientSecret="YOUR_GITHUB_CLIENT_SECRET" \
+  --set secrets.github.appPrivateKey="$(cat private-key.pem)" \
+  --set secrets.github.appWebhookSecret="YOUR_GITHUB_APP_WEBHOOK_SECRET"
 ```
 
 ### From the Helm Repository
@@ -199,6 +201,10 @@ ingress:
 ```yaml
 secrets:
   jwtSecret: "change-me-jwt-secret"
+  github:
+    token: ""
+    appPrivateKey: ""
+    appWebhookSecret: ""
   sso:
     githubClientSecret: ""
     googleClientSecret: ""
@@ -206,6 +212,8 @@ secrets:
 ```
 
 Never commit real secrets. Pass them at install time with `--set` or use an external secret management solution such as External Secrets Operator or Vault.
+
+`secrets.github.appPrivateKey` and `secrets.github.appWebhookSecret` are required when enabling private repository access via GitHub App installation tokens and webhook-driven disconnect events.
 
 ### PostgreSQL Credentials
 
@@ -231,6 +239,14 @@ config:
     interval: 20m
     pollInterval: 5m
     batchSize: 25
+  github:
+    app:
+      id: 123456
+      slug: "kikplate"
+      installUrl: ""
+      privateKeyPath: ""
+  privateOrg:
+    enabled: true
   sso:
     providers:
       - name: github
@@ -269,6 +285,12 @@ postgresql:
 config:
   server:
     frontendUrl: "https://kikplate.yourdomain.com"
+  github:
+    app:
+      id: 123456
+      slug: "kikplate"
+  privateOrg:
+    enabled: true
   sso:
     providers:
       - name: github

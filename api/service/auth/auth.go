@@ -28,14 +28,16 @@ type UpdateProfileInput struct {
 }
 
 type MeResult struct {
-	AccountID   string  `json:"account_id"`
-	Provider    string  `json:"provider"`
-	DisplayName *string `json:"display_name,omitempty"`
-	AvatarURL   *string `json:"avatar_url,omitempty"`
-	Username    *string `json:"username,omitempty"`
-	Email       *string `json:"email,omitempty"`
-	Role        *string `json:"role,omitempty"`
-	IsActive    *bool   `json:"is_active,omitempty"`
+	AccountID                 string  `json:"account_id"`
+	Provider                  string  `json:"provider"`
+	DisplayName               *string `json:"display_name,omitempty"`
+	AvatarURL                 *string `json:"avatar_url,omitempty"`
+	Username                  *string `json:"username,omitempty"`
+	Email                     *string `json:"email,omitempty"`
+	Role                      *string `json:"role,omitempty"`
+	IsActive                  *bool   `json:"is_active,omitempty"`
+	GitHubConnected           bool    `json:"github_connected"`
+	GitHubInstallationAccount *string `json:"github_installation_account,omitempty"`
 }
 
 type RegisterInput struct {
