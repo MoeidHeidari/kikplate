@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Building2, Plus, Loader2, Pencil, Check, X, Trash2 } from "lucide-react"
 import {
   useAcceptOrganizationInvitation,
@@ -39,6 +40,7 @@ import {
 } from "@/components/ui/dialog"
 import Image from "next/image"
 import type { Organization } from "@/src/domain/entities/Organization"
+import { CLIENT_API_BASE } from "@/src/lib/client-api"
 
 function OrganizationMembersModal({
   org,
@@ -175,6 +177,7 @@ function OrganizationMembersModal({
 }
 
 export function OrganizationsManager() {
+  const searchParams = useSearchParams()
   const { data: config } = useConfig()
   const { data: organizations, isLoading } = useMyOrganizations()
   const createOrg = useCreateOrganization()
@@ -202,6 +205,15 @@ export function OrganizationsManager() {
   const [confirmingLeaveOrg, setConfirmingLeaveOrg] = useState<{ id: string; name: string } | null>(null)
   const [leavingId, setLeavingId] = useState<string | null>(null)
   const [managingMembersOrg, setManagingMembersOrg] = useState<Organization | null>(null)
+  const [connectingOrgId, setConnectingOrgId] = useState<string | null>(null)
+
+  const githubOrgStatus = searchParams.get("github_org_status")
+  const githubOrgId = searchParams.get("github_org_id")
+
+  function connectOrganizationGitHub(orgId: string) {
+    setConnectingOrgId(orgId)
+    window.location.assign(`${CLIENT_API_BASE}/organizations/${orgId}/github/connect`)
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
@@ -359,6 +371,15 @@ export function OrganizationsManager() {
           Your organizations
         </p>
 
+        {githubOrgStatus && (
+          <div className="border border-border bg-muted/20 p-3 text-sm text-muted-foreground rounded-lg">
+            {githubOrgStatus === "connected" && "Organization GitHub access connected successfully."}
+            {githubOrgStatus === "type-mismatch" && "The GitHub App was installed on a personal account. Organization access requires installation on a GitHub organization."}
+            {githubOrgStatus === "error" && "Organization GitHub connection did not complete. Try again from the organization card."}
+            {githubOrgId && <span className="block mt-1 text-xs">Organization ID: {githubOrgId}</span>}
+          </div>
+        )}
+
         {isLoading && (
           <div className="text-sm text-muted-foreground">Loading organizations...</div>
         )}
@@ -474,12 +495,26 @@ export function OrganizationsManager() {
                       <p className="font-medium text-foreground">{org.name}</p>
                       <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">{org.visibility}</p>
                       <p className="mt-1 text-sm text-muted-foreground">{org.description || "No description"}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        GitHub access: {org.github_connected ? `connected${org.github_installation_account ? ` to ${org.github_installation_account}` : ""}` : "not connected"}
+                      </p>
                       {org.logo_url && (
                         <p className="mt-1 truncate text-xs text-muted-foreground">{org.logo_url}</p>
                       )}
                     </div>
                     {(org.membership_role === "owner" || org.membership_role === "admin") && (
                       <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5"
+                          disabled={removeOrg.isPending || leaveOrg.isPending || connectingOrgId === org.id}
+                          onClick={() => connectOrganizationGitHub(org.id)}
+                        >
+                          {connectingOrgId === org.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                          {org.github_connected ? "Reconnect GitHub" : "Connect GitHub"}
+                        </Button>
                         <Button
                           type="button"
                           variant="outline"

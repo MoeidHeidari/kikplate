@@ -56,6 +56,43 @@ type FeatureFlags struct {
 	PrivateOrganizationsEnabled bool
 }
 
+type GitHubAppConfig struct {
+	AppID          int64
+	Slug           string
+	InstallURL     string
+	PrivateKey     string
+	PrivateKeyPath string
+	WebhookSecret  string
+}
+
+func (c GitHubAppConfig) MissingFields() []string {
+	missing := make([]string, 0, 3)
+	if c.AppID <= 0 {
+		missing = append(missing, "github.app.id")
+	}
+	if strings.TrimSpace(c.InstallURL) == "" && strings.TrimSpace(c.Slug) == "" {
+		missing = append(missing, "github.app.slug or github.app.install_url")
+	}
+	if strings.TrimSpace(c.PrivateKey) == "" && strings.TrimSpace(c.PrivateKeyPath) == "" {
+		missing = append(missing, "github.app.private_key or github.app.private_key_path")
+	}
+	return missing
+}
+
+func (c GitHubAppConfig) InstallURLValue() string {
+	if trimmed := strings.TrimSpace(c.InstallURL); trimmed != "" {
+		return trimmed
+	}
+	if trimmed := strings.TrimSpace(c.Slug); trimmed != "" {
+		return "https://github.com/apps/" + trimmed + "/installations/new"
+	}
+	return ""
+}
+
+func (c GitHubAppConfig) IsConfigured() bool {
+	return c.AppID > 0 && c.InstallURLValue() != "" && (strings.TrimSpace(c.PrivateKey) != "" || strings.TrimSpace(c.PrivateKeyPath) != "")
+}
+
 type BadgeConfig struct {
 	Slug        string `mapstructure:"slug"`
 	Name        string `mapstructure:"name"`
@@ -83,6 +120,7 @@ type Env struct {
 	OAuthProviders    []OAuthProvider
 	EmailVerification EmailVerificationConfig
 	SMTP              SMTPConfig
+	GitHubApp         GitHubAppConfig
 	Customization     Customization
 	Features          FeatureFlags
 	Badges            []BadgeConfig
@@ -185,6 +223,33 @@ func NewEnv() Env {
 	env.GitHubToken = firstNonEmpty(
 		getConfigValue("github.token", "", ""),
 		os.Getenv("GITHUB_TOKEN"),
+	)
+	gitHubAppIDRaw := firstNonEmpty(
+		getConfigValue("github.app.id", "", ""),
+		os.Getenv("GITHUB_APP_ID"),
+	)
+	if parsed, err := strconv.ParseInt(strings.TrimSpace(gitHubAppIDRaw), 10, 64); err == nil && parsed > 0 {
+		env.GitHubApp.AppID = parsed
+	}
+	env.GitHubApp.Slug = firstNonEmpty(
+		getConfigValue("github.app.slug", "", ""),
+		os.Getenv("GITHUB_APP_SLUG"),
+	)
+	env.GitHubApp.InstallURL = firstNonEmpty(
+		getConfigValue("github.app.install_url", "", ""),
+		os.Getenv("GITHUB_APP_INSTALL_URL"),
+	)
+	env.GitHubApp.PrivateKey = firstNonEmpty(
+		getConfigValue("github.app.private_key", "", ""),
+		os.Getenv("GITHUB_APP_PRIVATE_KEY"),
+	)
+	env.GitHubApp.PrivateKeyPath = firstNonEmpty(
+		getConfigValue("github.app.private_key_path", "", ""),
+		os.Getenv("GITHUB_APP_PRIVATE_KEY_PATH"),
+	)
+	env.GitHubApp.WebhookSecret = firstNonEmpty(
+		getConfigValue("github.app.webhook_secret", "", ""),
+		os.Getenv("GITHUB_APP_WEBHOOK_SECRET"),
 	)
 	env.SyncInterval = firstNonEmpty(
 		getConfigValue("sync.interval", "", ""),

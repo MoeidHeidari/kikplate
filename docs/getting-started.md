@@ -56,6 +56,30 @@ sso:
 
 For a complete reference of every configuration key see [Configuration](configuration.md).
 
+### Optional: Enable Private Repository Support
+
+If you want to submit private repositories, configure a GitHub App in `config/config.yaml`:
+
+```yaml
+github:
+  app:
+    id: YOUR_GITHUB_APP_ID
+    slug: kikplate
+    install_url: ""
+    private_key_path: ../config/private-key.pem
+    webhook_secret: YOUR_GITHUB_APP_WEBHOOK_SECRET
+
+private_org:
+  enabled: true
+```
+
+Set your GitHub App registration to:
+
+- Setup URL: `https://YOUR_PUBLIC_API_BASE/auth/github/app/callback`
+- Webhook URL: `https://YOUR_PUBLIC_API_BASE/auth/github/app/webhook`
+
+For local development, expose `http://localhost:3001` through a tunnel (for example cloudflared or ngrok) and use the tunnel URL as `YOUR_PUBLIC_API_BASE`.
+
 ## Start the Stack
 
 ```

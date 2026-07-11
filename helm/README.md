@@ -25,7 +25,9 @@ helm install kikplate oci://ghcr.io/kikplate/helm-charts/kikplate \
   --namespace kikplate \
   --create-namespace \
   --set secrets.jwtSecret="$(openssl rand -base64 32)" \
-  --set secrets.sso.githubClientSecret="YOUR_GITHUB_CLIENT_SECRET"
+  --set secrets.sso.githubClientSecret="YOUR_GITHUB_CLIENT_SECRET" \
+  --set secrets.github.appPrivateKey="$(cat private-key.pem)" \
+  --set secrets.github.appWebhookSecret="YOUR_GITHUB_APP_WEBHOOK_SECRET"
 ```
 
 ## Upgrade
@@ -77,6 +79,9 @@ The following table lists the main configurable parameters and their default val
 | `ingress.className` | Ingress class name | `nginx` |
 | `ingress.host` | Public ingress hostname | `kikplate.example.com` |
 | `secrets.jwtSecret` | JWT signing secret for the application | `change-me-jwt-secret` |
+| `secrets.github.token` | Optional GitHub token used by sync/submit fallback flows | `""` |
+| `secrets.github.appPrivateKey` | GitHub App private key PEM content | `""` |
+| `secrets.github.appWebhookSecret` | GitHub App webhook secret for signature verification | `""` |
 | `secrets.sso.githubClientSecret` | GitHub OAuth client secret | `""` |
 | `secrets.sso.googleClientSecret` | Google OAuth client secret | `""` |
 | `secrets.sso.gitlabClientSecret` | GitLab OAuth client secret | `""` |
@@ -89,6 +94,11 @@ The following table lists the main configurable parameters and their default val
 | `config.sync.interval` | Full synchronization interval | `20m` |
 | `config.sync.pollInterval` | Polling interval for updates | `5m` |
 | `config.sync.batchSize` | Batch size for synchronization jobs | `25` |
+| `config.github.app.id` | GitHub App numeric ID | `0` |
+| `config.github.app.slug` | GitHub App slug used to build install URL | `""` |
+| `config.github.app.installUrl` | Optional explicit GitHub App install URL | `""` |
+| `config.github.app.privateKeyPath` | Optional in-container path to GitHub App private key PEM | `""` |
+| `config.privateOrg.enabled` | Enables private organization behavior and private repository checks | `false` |
 | `config.customization.logo` | Logo path used by the frontend | `/kikplate-logo-on-dark.svg` |
 | `config.customization.bannerTitle` | Main homepage banner title | `The Home of your starter boilerplates` |
 | `config.customization.badgeRequestUrl` | URL used for badge requests | `https://github.com/kikplate/kikplate/issues/new?template=badge-request.yml` |

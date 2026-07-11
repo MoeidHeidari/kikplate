@@ -27,11 +27,15 @@ export function SubmitRepositoryForm() {
   const { data: me } = useMe()
   const { data: organizations } = useMyOrganizations()
   const { data: appConfig, isLoading: configLoading } = useConfig()
+  const privateOrgEnabled = appConfig?.features?.private_organizations_enabled ?? false
   const plateCategories = appConfig?.plate_categories ?? []
   const [repoUrl, setRepoUrl] = useState("")
   const [branch, setBranch] = useState("main")
   const [organizationId, setOrganizationId] = useState("")
   const selectedOrganization = organizations?.find((org) => org.id === organizationId)
+  const selectedOrganizationIsPrivate = privateOrgEnabled && selectedOrganization?.visibility === "private"
+  const selectedOrganizationGitHubConnected = selectedOrganization?.github_connected ?? false
+  const privateRepoBlockedByOrgConnection = selectedOrganizationIsPrivate && !selectedOrganizationGitHubConnected
   const isPersonalSubmission = !organizationId
   const ownerHint = selectedOrganization?.name ?? me?.username ?? "your-username"
   const [ownerCopied, setOwnerCopied] = useState(false)
@@ -82,7 +86,8 @@ export function SubmitRepositoryForm() {
           <div>
             <p className="font-semibold text-foreground mb-1.5">Repository</p>
             <ul className="list-disc pl-4 space-y-1 mb-3">
-              <li>The repository must be public.</li>
+              <li>Personal submissions require a public repository.</li>
+              <li>Private organization submissions require organization-level GitHub access before a private repository can be read.</li>
               <li>
                 It must include <code className="font-mono bg-muted px-1 py-0.5">plate.yaml</code> at the root on
                 the branch you enter below.
@@ -129,16 +134,27 @@ export function SubmitRepositoryForm() {
                 <>
                   You have <span className="text-foreground font-medium">Personal</span> selected →{" "}
                   <code className="font-mono bg-muted px-1 py-0.5">owner</code> must be{" "}
-                  <span className="font-mono text-foreground font-medium">{ownerHint}</span>.
+                  <span className="font-mono text-foreground font-medium">{ownerHint}</span> and the repository must be public.
                 </>
               ) : (
                 <>
                   You have <span className="text-foreground font-medium">{selectedOrganization?.name}</span> selected →
                   the plate goes to that org → <code className="font-mono bg-muted px-1 py-0.5">owner</code> must be{" "}
-                  <span className="font-mono text-foreground font-medium">{ownerHint}</span> (org name, not your username).
+                  <span className="font-mono text-foreground font-medium">{ownerHint}</span> (org name, not your username)
+                  {selectedOrganizationIsPrivate
+                    ? selectedOrganizationGitHubConnected
+                      ? " and private repositories are allowed for this organization."
+                      : " but private repositories stay blocked until this organization has GitHub access connected."
+                    : " and the repository must be public."}
                 </>
               )}
             </p>
+
+            {privateRepoBlockedByOrgConnection && (
+              <p className="mt-2 rounded-lg border border-border bg-muted/20 px-3 py-2 text-[11px] leading-relaxed">
+                This private organization is not connected to GitHub yet. Use a public repository for now, or connect organization-level GitHub access first.
+              </p>
+            )}
           </div>
 
           <div>
@@ -261,7 +277,7 @@ tags:
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Choose Personal to submit under your account, or pick an organization.
+              Choose Personal to submit under your account, or pick an organization. Private repositories require a connected private organization.
             </p>
           )}
         </div>
@@ -323,9 +339,14 @@ tags:
           )}
           {(errorMsg.includes("not found") || errorMsg.includes("fetch")) && (
             <p className="text-xs text-muted-foreground pl-6">
-              Make sure the repository is public, the URL is correct, and
+              Make sure the repository is public unless the selected private organization has GitHub access, the URL is correct, and
               the <code className="font-mono bg-muted px-1 py-0.5">plate.yaml</code> exists
               on the <code className="font-mono bg-muted px-1 py-0.5">{branch}</code> branch.
+            </p>
+          )}
+          {errorMsg.includes("organization GitHub access") && (
+            <p className="text-xs text-muted-foreground pl-6">
+              Connect GitHub access for the selected private organization before submitting a private repository.
             </p>
           )}
           {errorMsg.includes("conflict") && (
@@ -340,7 +361,7 @@ tags:
         <div className="border-t border-border pt-5">
           <Button
             type="submit"
-            disabled={submit.isPending || !repoUrl}
+            disabled={submit.isPending || !repoUrl || privateRepoBlockedByOrgConnection}
             className="gap-2"
           >
             {submit.isPending && <Loader2 className="h-4 w-4 animate-spin" />}

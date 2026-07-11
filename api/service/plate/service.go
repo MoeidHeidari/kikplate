@@ -4,6 +4,7 @@ import (
 	"github.com/kickplate/api/events"
 	"github.com/kickplate/api/lib"
 	"github.com/kickplate/api/repository"
+	"github.com/kickplate/api/service/githubapp"
 	"gorm.io/gorm"
 )
 
@@ -33,6 +34,7 @@ type plateService struct {
 	accounts     repository.AccountRepository
 	users        repository.UserRepository
 	reviews      repository.PlateReviewRepository
+	githubApp    githubapp.Service
 	logger       lib.Logger
 	emitter      *events.EventEmitter
 }
@@ -50,6 +52,7 @@ func NewPlateService(
 	accounts repository.AccountRepository,
 	users repository.UserRepository,
 	reviews repository.PlateReviewRepository,
+	githubApp githubapp.Service,
 	logger lib.Logger,
 	emitter *events.EventEmitter,
 ) PlateService {
@@ -66,6 +69,7 @@ func NewPlateService(
 		accounts:     accounts,
 		users:        users,
 		reviews:      reviews,
+		githubApp:    githubApp,
 		logger:       logger,
 		emitter:      emitter,
 	}

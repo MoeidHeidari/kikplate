@@ -21,6 +21,17 @@ data:
       poll_interval: 5m
       batch_size: 25
 
+    github:
+      token: ""
+      app:
+        id: 0
+        slug: kikplate
+        install_url: ""
+        private_key_path: ""
+
+    private_org:
+      enabled: false
+
     sso:
       providers:
         - name: github
