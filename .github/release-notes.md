@@ -1,3 +1,69 @@
+# Release Notes: v0.22.0
+
+**Previous:** v0.21.0
+**Summary:** CLI improvements, SEO enhancements, sync resilience, and dark mode refinements
+
+## Minor Features & Improvements
+
+### CLI Enhancements (feat/cli-seo-sync-improvements)
+
+**Search Command**
+* Added positional argument support: `kik search <query>` now equivalent to `kik search --name <query>`
+* Improved table output: removed duplicate NAME column, added VISIBILITY and SCHEMA columns
+* SCHEMA column detects whether a plate has variables defined in synced metadata
+
+**Describe Command**
+* Now fetches and displays plate schema, modules, and files in formatted tables
+* Removed redundant Rating field (Stars is sufficient)
+* Schema table dynamically shows VALUES column only when at least one field has enum restrictions
+
+**Generate Error Messages**
+* Fixed error matching: switched from `==` to `errors.Is()` to properly surface wrapped errors
+* `BuildZip` errors now wrapped with `ErrTemplateFailed` for accurate HTTP status codes and error messages
+* Default error case now returns actual error text instead of generic "generation failed"
+
+**Config Management**
+* Added `kik config set-server <address>` subcommand for updating server address via CLI
+* Works even if config file doesn't exist yet
+
+Files Changed: 10 files
+Impact: CLI UX, error reporting
+
+### API Sync Improvements
+
+**Metadata Capture**
+* Added `Schema` field to `syncPlateManifestYAML` with proper `yaml` and `json` tags
+* Schema variables now captured during plate sync for CLI and frontend use
+* Explicit `json` tags on all `syncPlateManifestYAML` fields for consistent serialization
+
+Files Changed: 1 file
+Impact: Sync worker, plate metadata storage
+
+### Web Frontend
+
+**SEO & Discoverability**
+* Added `generateMetadata` to plate detail pages with unique title, description, keywords, Open Graph tags, and canonical URLs
+* Added `generateMetadata` to explore page with dynamic titles reflecting active filters
+* Root layout now uses `title.template` for proper page title inheritance
+* Added `/sitemap.xml` generation from all plate slugs with pagination support
+* Added `/robots.txt` with crawler directives and sitemap reference
+* Replaced default Next.js favicon with kikplate logo (app/icon.svg)
+
+**Form Improvements**
+* Fixed organization select in submit form: now displays org name instead of UUID when non-personal organization selected
+* Replaced async `SelectValue` with explicit display lookup to eliminate race conditions
+
+**Design System**
+* Aligned all dark mode CSS variables to zinc oklch values for consistency
+* Updated dark mode tokens: `card`, `popover`, `secondary`, `muted`, `accent`, `ring`, `sidebar`
+* Changed overlay color in dialog and sheet components from `slate-950` to `zinc-950`
+* Updated community badge tier color from `gray-*` to `zinc-*`
+
+Files Changed: 13 files
+Impact: Frontend UX, SEO, dark mode consistency
+
+---
+
 # Release Notes: v0.18.0
 
 **Previous:** v0.17.0
