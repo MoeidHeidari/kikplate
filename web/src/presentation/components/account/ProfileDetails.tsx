@@ -1,13 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Copy, Check, CheckCircle2, XCircle, Pencil, Trash2 } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Copy, Check, CheckCircle2, XCircle, Pencil, Trash2, Github, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { MeResult } from "@/src/domain/entities/User"
 import { EditProfileModal } from "./EditProfileModal"
 import { DeleteAccountModal } from "./DeleteAccountModal"
 import { useLogout } from "@/src/presentation/hooks/useAuth"
+import { CLIENT_API_BASE } from "@/src/lib/client-api"
 
 function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false)
@@ -43,8 +44,16 @@ function oauthOrTrustedProvider(provider: string): boolean {
 export function ProfileDetails({ me }: { me: MeResult }) {
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [connectingGitHub, setConnectingGitHub] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const logout = useLogout()
+  const githubAccountStatus = searchParams.get("github_account_status")
+
+  function connectGitHub() {
+    setConnectingGitHub(true)
+    window.location.assign(`${CLIENT_API_BASE}/auth/github/connect`)
+  }
 
   const rows: Row[] = [
     {
@@ -72,6 +81,16 @@ export function ProfileDetails({ me }: { me: MeResult }) {
       label: "Provider",
       value: <span className="text-sm capitalize">{me.provider}</span>,
     },
+    {
+      label: "GitHub access",
+      value: (
+        <span className="text-sm text-muted-foreground">
+          {me.github_connected
+            ? `Connected${me.github_installation_account ? ` to ${me.github_installation_account}` : ""}`
+            : "Not connected"}
+        </span>
+      ),
+    },
     me.role
       ? {
           label: "Role",
@@ -98,6 +117,14 @@ export function ProfileDetails({ me }: { me: MeResult }) {
   return (
     <>
       <div className="max-w-lg space-y-6">
+        {githubAccountStatus && (
+          <div className="rounded-xl border border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+            {githubAccountStatus === "connected" && "GitHub account access is now connected for personal private repositories."}
+            {githubAccountStatus === "type-mismatch" && "The GitHub App was installed on an organization. Personal access requires installation on your personal GitHub account."}
+            {githubAccountStatus === "error" && "GitHub account connection did not complete. Try again from this page."}
+          </div>
+        )}
+
         <div>
           <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Account details
@@ -121,6 +148,15 @@ export function ProfileDetails({ me }: { me: MeResult }) {
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Button
+            onClick={connectGitHub}
+            variant="outline"
+            className="gap-1.5"
+            disabled={connectingGitHub}
+          >
+            {connectingGitHub ? <Loader2 className="h-4 w-4 animate-spin" /> : <Github className="h-4 w-4" />}
+            {me.github_connected ? "Reconnect GitHub" : "Connect GitHub"}
+          </Button>
           <Button
             onClick={() => setEditOpen(true)}
             variant="outline"

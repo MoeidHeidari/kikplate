@@ -5,6 +5,8 @@ export interface Organization {
   description: string
   logo_url?: string
   owner_id: string
+  github_connected?: boolean
+  github_installation_account?: string
   membership_role?: "owner" | "admin" | "member"
   created_at: string
   updated_at: string

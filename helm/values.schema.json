@@ -162,6 +162,23 @@
           "type": "string",
           "description": "JWT signing secret used by the application."
         },
+        "github": {
+          "type": "object",
+          "properties": {
+            "token": {
+              "type": "string",
+              "description": "Optional GitHub token used by sync and submit flows."
+            },
+            "appPrivateKey": {
+              "type": "string",
+              "description": "GitHub App private key PEM content used to mint app JWTs."
+            },
+            "appWebhookSecret": {
+              "type": "string",
+              "description": "GitHub App webhook secret used to verify webhook signatures."
+            }
+          }
+        },
         "sso": {
           "type": "object",
           "properties": {
@@ -242,6 +259,42 @@
               "type": "integer",
               "minimum": 1,
               "description": "Maximum number of records processed per batch."
+            }
+          }
+        },
+        "github": {
+          "type": "object",
+          "properties": {
+            "app": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "GitHub App numeric ID."
+                },
+                "slug": {
+                  "type": "string",
+                  "description": "GitHub App slug used to build the default installation URL."
+                },
+                "installUrl": {
+                  "type": "string",
+                  "description": "Optional explicit GitHub App installation URL override."
+                },
+                "privateKeyPath": {
+                  "type": "string",
+                  "description": "Optional filesystem path to GitHub App private key PEM file."
+                }
+              }
+            }
+          }
+        },
+        "privateOrg": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable private organization behavior and private repository restrictions."
             }
           }
         },

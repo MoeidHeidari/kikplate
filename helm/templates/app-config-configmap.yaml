@@ -23,6 +23,17 @@ data:
       poll_interval: {{ .Values.config.sync.pollInterval }}
       batch_size: {{ .Values.config.sync.batchSize }}
 
+    github:
+      token: ""
+      app:
+        id: {{ .Values.config.github.app.id }}
+        slug: {{ .Values.config.github.app.slug | quote }}
+        install_url: {{ .Values.config.github.app.installUrl | quote }}
+        private_key_path: {{ .Values.config.github.app.privateKeyPath | quote }}
+
+    private_org:
+      enabled: {{ .Values.config.privateOrg.enabled }}
+
     sso:
       providers:
         {{- range .Values.config.sso.providers }}

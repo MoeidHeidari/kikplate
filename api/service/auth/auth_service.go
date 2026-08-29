@@ -643,10 +643,12 @@ func (s *authService) GetMe(ctx context.Context, accountID uuid.UUID) (*MeResult
 	}
 
 	result := &MeResult{
-		AccountID:   account.ID.String(),
-		Provider:    account.Provider,
-		DisplayName: account.DisplayName,
-		AvatarURL:   account.AvatarURL,
+		AccountID:                 account.ID.String(),
+		Provider:                  account.Provider,
+		DisplayName:               account.DisplayName,
+		AvatarURL:                 account.AvatarURL,
+		GitHubConnected:           account.GitHubInstallationID != nil,
+		GitHubInstallationAccount: account.GitHubInstallationAccount,
 	}
 
 	if account.UserID != nil {

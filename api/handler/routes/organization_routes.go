@@ -26,6 +26,7 @@ func (r OrganizationRoutes) Setup() {
 		m.Post("/invitations/{invitationId}/decline", r.handler.DeclineInvitation)
 		m.Get("/by-name/{name}", r.handler.GetByName)
 		m.Get("/{id}", r.handler.GetByID)
+		m.Get("/{id}/github/connect", r.handler.ConnectGitHub)
 		m.Get("/{id}/members", r.handler.ListMembers)
 		m.Get("/{id}/invitations", r.handler.ListInvitations)
 		m.Delete("/{id}/members/{accountId}", r.handler.RemoveMember)

@@ -117,6 +117,10 @@ ingress:
 # ---------------------------------------------------------------------------
 secrets:
   jwtSecret: "change-me-jwt-secret"
+  github:
+    token: ""
+    appPrivateKey: ""
+    appWebhookSecret: ""
   sso:
     githubClientSecret: ""
     googleClientSecret: ""
@@ -143,6 +147,14 @@ config:
     interval: 20m
     pollInterval: 5m
     batchSize: 25
+  github:
+    app:
+      id: 0
+      slug: ""
+      installUrl: ""
+      privateKeyPath: ""
+  privateOrg:
+    enabled: false
   sso:
     providers:
       - name: github

@@ -70,16 +70,29 @@ These values are intentionally conservative. In a deployment with thousands of p
 
 ### github
 
-GitHub API configuration for syncing plate manifests from repositories.
+GitHub configuration for syncing manifests and private repository access through GitHub App installations.
 
 ```yaml
 github:
-  token: ""  # Optional GitHub Personal Access Token
+  token: ""   # Optional fallback GitHub Personal Access Token
+  app:
+    id: 0
+    slug: kikplate
+    install_url: ""
+    private_key: ""
+    private_key_path: "../config/private-key.pem"
+    webhook_secret: ""
 ```
 
 | Environment Variable | Config Key |
 |---------------------|-----------|
 | `GITHUB_TOKEN` | `github.token` |
+| `GITHUB_APP_ID` | `github.app.id` |
+| `GITHUB_APP_SLUG` | `github.app.slug` |
+| `GITHUB_APP_INSTALL_URL` | `github.app.install_url` |
+| `GITHUB_APP_PRIVATE_KEY` | `github.app.private_key` |
+| `GITHUB_APP_PRIVATE_KEY_PATH` | `github.app.private_key_path` |
+| `GITHUB_APP_WEBHOOK_SECRET` | `github.app.webhook_secret` |
 
 **What is this used for?**
 
@@ -104,6 +117,12 @@ The sync worker fetches `plate.yaml` manifests from GitHub repositories to keep 
 **Recommendation**
 
 For production deployments with more than a handful of plates, setting a GitHub token is **strongly recommended** to avoid rate limiting issues.
+
+For private repositories, configure a GitHub App and set:
+
+- Setup URL: `/auth/github/app/callback`
+- Webhook URL: `/auth/github/app/webhook`
+- Webhook secret matching `github.app.webhook_secret`
 
 ### sso
 
@@ -336,6 +355,13 @@ See [Kubernetes](kubernetes.md) and [Helm](helm.md) for deployment-specific conf
 | `SERVER_PORT` | API listen port | `3001` |
 | `SERVER_LOG_LEVEL` | Log verbosity | `info` |
 | `JWT_SECRET` | JWT signing secret | Required |
+| `GITHUB_TOKEN` | Optional fallback GitHub token for sync/submit requests | Empty |
+| `GITHUB_APP_ID` | GitHub App numeric ID | Empty |
+| `GITHUB_APP_SLUG` | GitHub App slug used to build install URL | Empty |
+| `GITHUB_APP_INSTALL_URL` | Explicit GitHub App install URL override | Empty |
+| `GITHUB_APP_PRIVATE_KEY` | GitHub App private key PEM content | Empty |
+| `GITHUB_APP_PRIVATE_KEY_PATH` | Path to GitHub App private key PEM | Empty |
+| `GITHUB_APP_WEBHOOK_SECRET` | GitHub webhook signature verification secret | Empty |
 | `AUTH_HEADER` | Trusted header name for reverse-proxy auth | Disabled |
 | `AUTH_EMAIL_VERIFICATION_ENABLED` | Enable email verification for local signup | `false` |
 | `AUTH_EMAIL_VERIFICATION_TOKEN_TTL` | Verification token expiration duration | `24h` |
@@ -347,4 +373,5 @@ See [Kubernetes](kubernetes.md) and [Helm](helm.md) for deployment-specific conf
 | `SMTP_FROM_EMAIL` | Sender email address | None |
 | `SMTP_FROM_NAME` | Sender display name | `Kikplate` |
 | `SMTP_USE_STARTTLS` | Use STARTTLS instead of implicit TLS | `true` |
+| `PRIVATE_ORG_ENABLED` | Enable private organization behavior | `false` |
 | `ENV` | Environment name (`development`, `production`) | `development` |

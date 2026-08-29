@@ -27,12 +27,13 @@ func (s *plateService) SubmitRepository(ctx context.Context, accountID uuid.UUID
 		branch = "main"
 	}
 
-	kp, err := s.fetchKickplateYAML(input.RepoURL, branch)
-	if err != nil {
-		return nil, err
-	}
+	ownerAccountID := account.ID.String()
+	accountGitHubConnected := account.GitHubInstallationID != nil
+	var organizationIDStr *string
 
 	var ownerName string
+	privateOrganization := false
+	organizationGitHubConnected := false
 	if input.OrganizationID != nil {
 		if s.orgs == nil {
 			return nil, ErrInvalidInput
@@ -49,7 +50,11 @@ func (s *plateService) SubmitRepository(ctx context.Context, accountID uuid.UUID
 		if !canManageOrg {
 			return nil, ErrForbidden
 		}
+		privateOrganization = s.env.Features.PrivateOrganizationsEnabled && org.Visibility == model.OrganizationVisibilityPrivate
+		organizationGitHubConnected = org.GitHubInstallationID != nil
 		ownerName = org.Name
+		orgID := org.ID.String()
+		organizationIDStr = &orgID
 	} else {
 		if account.UserID == nil || s.users == nil {
 			return nil, ErrNoUsername
@@ -63,6 +68,25 @@ func (s *plateService) SubmitRepository(ctx context.Context, accountID uuid.UUID
 			return nil, ErrNoUsername
 		}
 		ownerName = user.Username
+	}
+
+	repoPrivate, err := s.fetchRepositoryVisibility(ctx, input.RepoURL, ownerAccountID, organizationIDStr)
+	if err != nil {
+		return nil, err
+	}
+	if err := privateRepositoryAllowed(repoPrivate, input.OrganizationID != nil, privateOrganization); err != nil {
+		return nil, err
+	}
+	if repoPrivate && input.OrganizationID == nil && !accountGitHubConnected {
+		return nil, ErrAccountGitHubAccess
+	}
+	if repoPrivate && input.OrganizationID != nil && !organizationGitHubConnected {
+		return nil, ErrOrganizationGitHubAccess
+	}
+
+	kp, err := s.fetchKickplateYAML(ctx, input.RepoURL, branch, ownerAccountID, organizationIDStr)
+	if err != nil {
+		return nil, err
 	}
 
 	if kp.Owner != ownerName {
